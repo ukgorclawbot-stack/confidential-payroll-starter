@@ -1,0 +1,112 @@
+# Confidential Payroll Starter Pack for Zama
+
+A documentation-first starter project exploring how confidential payroll can be built on top of Zama.
+
+## What this is
+
+This repository is a builder-oriented starter pack for one practical use case: payroll that can be coordinated onchain without exposing sensitive compensation data publicly.
+
+It focuses on a simple question:
+
+How should a confidential payroll system work if we want public execution, but private values?
+
+## Why this matters
+
+Traditional onchain systems are transparent by default. That works for many applications, but payroll is different.
+
+A transparent payroll system can reveal:
+
+- salary levels
+- bonus structure
+- internal team hierarchy
+- contractor relationships
+- treasury behavior tied to operations
+
+This project explores how Zama can support a better model for real-world business workflows.
+
+## Repository contents
+
+- `docs/concept-note.md`
+  High-level problem statement and project intent
+
+- `docs/architecture.md`
+  Minimum system design, actor model, privacy boundaries, and workflow structure
+
+- `docs/tutorial-confidential-payroll.md`
+  Builder-friendly walkthrough of the use case
+
+- `examples/sample-payroll-flow.md`
+  Example lifecycle of a confidential payroll batch
+
+- `docs/prototype-plan.md`
+  Explains the current prototype boundary and next implementation steps
+
+- `contracts/PayrollTypes.sol`
+  Shared enums and structs for payroll workflow modeling
+
+- `contracts/IPayrollVault.sol`
+  Future settlement-layer interface
+
+- `contracts/MockPayrollVault.sol`
+  Minimal local vault stub used to verify funding and settlement callbacks, history, and rejection paths
+
+- `contracts/PayrollManager.sol`
+  Workflow-oriented prototype contract for batch lifecycle, claim tracking, and optional vault callbacks
+
+- `test/PayrollManager.js`
+  First local lifecycle tests for the payroll workflow skeleton
+
+- `hardhat.config.cjs`
+  Minimal local Hardhat configuration for compile and test
+
+- `package.json`
+  Local scripts and dev dependencies for the prototype harness
+
+- `scripts/`
+  Placeholder for future helper scripts and local workflows
+
+## MVP goal
+
+The MVP focuses on:
+
+1. creating a payroll batch
+2. assigning confidential employee records
+3. approving the batch
+4. funding the batch
+5. releasing or claiming payments
+6. closing the batch
+
+## Status
+
+Early builder contribution with a documentation-first workflow prototype.
+
+Current local validation includes:
+
+- Hardhat compile
+- 49 passing behavior tests across `PayrollManager` and `MockPayrollVault`
+- batch details visible only to the batch employer, operator, or participating employee
+- public batch summaries available without exposing the full batch struct
+- public workflow events covered for batch creation, funding, claiming, and closure
+- record existence visibility aligned with record-viewer permissions
+- employee claim permissions restricted to the record owner, employer, or operator
+- repeated funding registration blocked after the first successful funding transition
+- release transition blocked after the first successful release and after later states
+- batch closure restricted to the employer even after all claims are settled
+- claim and close state isolated across multiple concurrent batches
+- funding and release permissions isolated to each batch's assigned operator or employer
+- approval restricted to each batch's own employer, even across concurrent batches
+- addRecord permissions isolated to each batch's own employer or operator
+- claim permissions isolated to each batch's own employer, operator, or target employee
+- final-state restrictions after batch closure
+- mock vault callback verification for funding and settlement history
+- mock vault per-batch funding and per-employee settlement state tracking
+- mock vault rejection of duplicate funding and duplicate settlement writes
+- vault-side rejection rollback coverage for funding and settlement registration
+- payroll-layer custom errors for wrapped vault callback failures
+
+The repository still does not claim FHE integration or production-ready settlement logic.
+
+## Reference
+
+- Zama Developer Program:
+  https://www.zama.org/post/zama-developer-program-mainnet-season1-building-for-the-long-game

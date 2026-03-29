@@ -1,0 +1,15 @@
+{
+  "name": "confidential-payroll-starter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minimal local test harness for the confidential payroll starter prototype.",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "ethers": "^6.15.0",
+    "hardhat": "^2.22.19"
+  }
+}
