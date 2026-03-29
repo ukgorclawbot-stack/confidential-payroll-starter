@@ -63,7 +63,7 @@ This project explores how Zama can support a better model for real-world busines
   Local scripts and dev dependencies for the prototype harness
 
 - `scripts/report-batch-reconciliation.cjs`
-  Read-only helper for printing `MockPayrollVault` batch reconciliation summaries
+  Read-only helper for printing `MockPayrollVault` batch reconciliation summaries as text or JSON
 
 - `scripts/`
   Helper scripts and usage notes for local reporting flows
@@ -86,7 +86,7 @@ Early builder contribution with a documentation-first workflow prototype.
 Current local validation includes:
 
 - Hardhat compile
-- 71 passing tests across `PayrollManager`, `MockPayrollVault`, and reporting helpers
+- 73 passing tests across `PayrollManager`, `MockPayrollVault`, and reporting helpers
 - batch details visible only to the batch employer, operator, or participating employee
 - public batch summaries available without exposing the full batch struct
 - public batch summaries expose workflow progress only through status, payroll period, employee count, claimed count, remaining claims, close readiness, and funding presence
@@ -110,11 +110,12 @@ Current local validation includes:
 - mock vault expected-settlement targets, remaining-settlement tracking, and settled-batch marking
 - mock vault optional funding-amount, settled-amount, and remaining-funding accounting
 - mock vault batch-level reconciliation reporting for settlement counts and value accounting
+- local reconciliation report script with text and JSON output modes
 - mock vault funding and settlement event emissions covered by local tests
 - mock vault value-accounting event coverage and over-settlement rejection
 - mock vault rejection of duplicate funding and duplicate settlement writes
 - mock vault rejection of extra settlements after a batch is marked settled
-- local reconciliation report script with demo mode and formatter helper coverage
+- local reconciliation report script with demo mode and formatter/helper coverage
 - vault-side rejection rollback coverage for funding and settlement registration
 - payroll-layer custom errors for wrapped vault callback failures
 

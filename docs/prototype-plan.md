@@ -121,6 +121,7 @@ Checked:
 - mock vault settled-batch marking and post-completion settlement rejection
 - mock vault optional funding-amount and settled-amount tracking
 - mock vault batch-level reconciliation reporting for completion and funding state
+- local reconciliation report script with text and JSON outputs
 - mock vault rejection of settlements that exceed configured funding amounts
 - local reconciliation report helper for demo and inspection flows
 - mock vault duplicate funding and settlement rejection

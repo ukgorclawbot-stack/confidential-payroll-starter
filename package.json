@@ -7,7 +7,8 @@
     "compile": "hardhat compile",
     "test": "hardhat test",
     "report:demo": "REPORT_DEMO_MODE=partial hardhat run scripts/report-batch-reconciliation.cjs",
-    "report:demo:settled": "REPORT_DEMO_MODE=settled hardhat run scripts/report-batch-reconciliation.cjs"
+    "report:demo:settled": "REPORT_DEMO_MODE=settled hardhat run scripts/report-batch-reconciliation.cjs",
+    "report:demo:json": "REPORT_DEMO_MODE=partial REPORT_OUTPUT=json hardhat run scripts/report-batch-reconciliation.cjs"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.8",

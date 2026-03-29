@@ -21,6 +21,12 @@ Run a fully settled demo batch:
 npm run report:demo:settled
 ```
 
+Run a partial demo batch as JSON:
+
+```bash
+npm run report:demo:json
+```
+
 Query an existing deployed mock vault:
 
 ```bash
@@ -28,3 +34,9 @@ REPORT_VAULT_ADDRESS=<vault-address> REPORT_BATCH_ID=7 npx hardhat run scripts/r
 ```
 
 The script is intentionally read-only from the reporting side. In demo mode it deploys a temporary local `MockPayrollVault`, seeds one example batch, and prints the resulting reconciliation summary.
+
+To force JSON output for any invocation:
+
+```bash
+REPORT_OUTPUT=json npx hardhat run scripts/report-batch-reconciliation.cjs
+```

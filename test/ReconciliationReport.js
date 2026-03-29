@@ -2,7 +2,9 @@ const assert = require("node:assert/strict");
 
 const {
   normalizeBatchReconciliation,
-  formatBatchReconciliation
+  formatBatchReconciliation,
+  serializeBatchReconciliation,
+  resolveOptions
 } = require("../scripts/report-batch-reconciliation.cjs");
 
 describe("report-batch-reconciliation script helpers", function () {
@@ -53,5 +55,33 @@ describe("report-batch-reconciliation script helpers", function () {
     assert.match(output, /isCountSettled: true/);
     assert.match(output, /isValueSettled: false/);
     assert.match(output, /remainingFundingAmount: 200/);
+  });
+
+  it("serializes a reconciliation report as pretty JSON", function () {
+    const output = serializeBatchReconciliation({
+      batchId: "3",
+      isFunded: true,
+      isCountSettled: false,
+      isValueSettled: false,
+      expectedSettlementCount: "2",
+      settlementCount: "1",
+      remainingSettlementCount: "1",
+      fundingAmount: "1000",
+      settledAmount: "400",
+      remainingFundingAmount: "600"
+    });
+
+    assert.match(output, /"batchId": "3"/);
+    assert.match(output, /"remainingFundingAmount": "600"/);
+  });
+
+  it("resolves json output mode from cli flags or environment", function () {
+    const fromFlag = resolveOptions(["--json"], {});
+    const fromEnv = resolveOptions([], { REPORT_OUTPUT: "json" });
+
+    assert.equal(fromFlag.output, "json");
+    assert.equal(fromEnv.output, "json");
+    assert.equal(fromFlag.batchId, 1n);
+    assert.equal(fromEnv.batchId, 1n);
   });
 });

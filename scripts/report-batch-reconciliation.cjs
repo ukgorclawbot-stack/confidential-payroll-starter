@@ -41,11 +41,16 @@ function formatBatchReconciliation(report) {
   ].join("\n");
 }
 
+function serializeBatchReconciliation(report) {
+  return JSON.stringify(report, null, 2);
+}
+
 function parseArgs(argv) {
   const options = {
     batchId: null,
     demo: null,
-    address: null
+    address: null,
+    output: null
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -66,6 +71,11 @@ function parseArgs(argv) {
     if (token === "--demo") {
       options.demo = argv[index + 1] || "partial";
       index += 1;
+      continue;
+    }
+
+    if (token === "--json") {
+      options.output = "json";
       continue;
     }
 
@@ -94,6 +104,14 @@ function resolveOptions(argv, env = process.env) {
 
   if (options.batchId === null) {
     options.batchId = 1n;
+  }
+
+  if (options.output === null && env.REPORT_OUTPUT) {
+    options.output = env.REPORT_OUTPUT;
+  }
+
+  if (options.output === null) {
+    options.output = "text";
   }
 
   return options;
@@ -162,6 +180,11 @@ async function main() {
     await mockVault.getBatchReconciliation(options.batchId)
   );
 
+  if (options.output === "json") {
+    console.log(serializeBatchReconciliation(report));
+    return;
+  }
+
   if (options.demo) {
     console.log(`demoMode: ${options.demo}`);
   }
@@ -181,6 +204,7 @@ if (require.main === module) {
 module.exports = {
   normalizeBatchReconciliation,
   formatBatchReconciliation,
+  serializeBatchReconciliation,
   parseArgs,
   resolveOptions
 };
