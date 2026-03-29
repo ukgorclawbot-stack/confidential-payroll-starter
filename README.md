@@ -58,6 +58,18 @@ npm run report:demo:discord
 | Validation | `75` passing local tests across contracts and reporting helpers |
 | Not claimed yet | Real FHE integration, real token settlement, and production deployment guarantees are intentionally out of scope |
 
+## Architecture at a glance
+
+```mermaid
+flowchart LR
+    A["Concept + Architecture Docs"] --> B["PayrollManager<br/>workflow state machine"]
+    B --> C["MockPayrollVault<br/>completion + value accounting"]
+    C --> D["Reconciliation View"]
+    D --> E["Text Report"]
+    D --> F["JSON Report"]
+    D --> G["Discord Payload"]
+```
+
 ## Sample output
 
 Text report:
@@ -106,6 +118,35 @@ Discord webhook payload:
   ]
 }
 ```
+
+## Use cases
+
+This starter is easiest to map onto a few concrete confidential-finance patterns:
+
+- payroll batches with private employee compensation records
+- bonus and incentive distributions with visible workflow state but hidden values
+- contractor and vendor payouts without exposing counterparty-level payment details
+- treasury-controlled disbursements that need reconciliation without full public disclosure
+
+## Why now
+
+Confidential applications become easier to evaluate when builders can inspect a full workflow instead of isolated primitives.
+
+This repository tries to make that evaluation practical by combining:
+
+- docs that explain the business-facing problem
+- a workflow-first contract skeleton
+- a richer local vault stub for settlement and reconciliation semantics
+- reporting outputs that can later feed dashboards, bots, or operational tooling
+
+## Next steps
+
+The most natural next extensions from this starter are:
+
+- replace digest-only placeholders with real confidential-compute integrations
+- connect the workflow to a real settlement layer instead of a local mock vault
+- add a real Discord webhook sender or lightweight dashboard on top of reconciliation outputs
+- grow the example surface into adjacent flows such as bonuses, reimbursements, and contractor settlement
 
 ## Why this matters
 
