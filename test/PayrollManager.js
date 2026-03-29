@@ -87,6 +87,17 @@ describe("PayrollManager", function () {
     );
   });
 
+  it("rejects creating a batch with a zero operator", async function () {
+    const { payrollManager, employer } = await deployFixture();
+
+    await assert.rejects(
+      payrollManager
+        .connect(employer)
+        .createBatch(ethers.ZeroAddress, 202601, "ipfs://batch-zero-operator"),
+      /ZeroAddress/
+    );
+  });
+
   it("emits BatchCreated with the expected metadata", async function () {
     const { payrollManager, employer, operator } = await deployFixture();
 
@@ -461,6 +472,36 @@ describe("PayrollManager", function () {
     );
   });
 
+  it("rejects adding a record with a zero employee", async function () {
+    const { payrollManager, employer, operator } = await deployFixture();
+
+    await (await payrollManager
+      .connect(employer)
+      .createBatch(operator.address, 202601, "ipfs://batch-zero-employee")).wait();
+
+    await assert.rejects(
+      payrollManager
+        .connect(operator)
+        .addRecord(1, ethers.ZeroAddress, ethers.id("record-zero-employee")),
+      /ZeroAddress/
+    );
+  });
+
+  it("rejects adding a record with an empty digest", async function () {
+    const { payrollManager, employer, operator, employeeA } = await deployFixture();
+
+    await (await payrollManager
+      .connect(employer)
+      .createBatch(operator.address, 202601, "ipfs://batch-empty-record-digest")).wait();
+
+    await assert.rejects(
+      payrollManager
+        .connect(operator)
+        .addRecord(1, employeeA.address, ethers.ZeroHash),
+      /EmptyRecordDigest/
+    );
+  });
+
   it("rejects approving a batch from a non-employer address", async function () {
     const { payrollManager, employer, operator, employeeA } =
       await deployFixture();
@@ -488,6 +529,17 @@ describe("PayrollManager", function () {
     await assert.rejects(
       payrollManager.connect(operator).registerFunding(1, ethers.id("funding-a")),
       /reverted/
+    );
+  });
+
+  it("rejects registering funding with an empty digest", async function () {
+    const { payrollManager, employer, operator, employeeA } = await deployFixture();
+
+    await createApprovedBatch(payrollManager, employer, operator, employeeA);
+
+    await assert.rejects(
+      payrollManager.connect(operator).registerFunding(1, ethers.ZeroHash),
+      /EmptyRecordDigest/
     );
   });
 
@@ -553,6 +605,28 @@ describe("PayrollManager", function () {
       .connect(employeeA)
       .markClaimed(1, employeeA.address, ethers.id("settlement-b")),
       /reverted/
+    );
+  });
+
+  it("rejects claiming with an empty settlement digest", async function () {
+    const { payrollManager, employer, operator, employeeA } = await deployFixture();
+
+    await createReleasedBatch(payrollManager, employer, operator, employeeA);
+
+    await assert.rejects(
+      payrollManager
+        .connect(employeeA)
+        .markClaimed(1, employeeA.address, ethers.ZeroHash),
+      /EmptyRecordDigest/
+    );
+  });
+
+  it("rejects reading a summary for a missing batch", async function () {
+    const { payrollManager, outsider } = await deployFixture();
+
+    await assert.rejects(
+      payrollManager.connect(outsider).getBatchSummary(999),
+      /BatchNotFound/
     );
   });
 
