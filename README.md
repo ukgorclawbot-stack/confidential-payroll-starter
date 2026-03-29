@@ -83,11 +83,11 @@ Early builder contribution with a documentation-first workflow prototype.
 Current local validation includes:
 
 - Hardhat compile
-- 51 passing behavior tests across `PayrollManager` and `MockPayrollVault`
+- 54 passing behavior tests across `PayrollManager` and `MockPayrollVault`
 - batch details visible only to the batch employer, operator, or participating employee
 - public batch summaries available without exposing the full batch struct
 - public batch summaries expose workflow progress only through status, payroll period, employee count, claimed count, remaining claims, close readiness, and funding presence
-- public workflow events covered for batch creation, funding, claiming, and closure
+- public workflow events covered for batch creation, record registration, approval, funding, claiming, and closure
 - record existence visibility aligned with record-viewer permissions
 - employee claim permissions restricted to the record owner, employer, or operator
 - repeated funding registration blocked after the first successful funding transition

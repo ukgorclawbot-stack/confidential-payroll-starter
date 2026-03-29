@@ -103,6 +103,42 @@ describe("PayrollManager", function () {
     assert.equal(args.metadataURI, "ipfs://batch-event-1");
   });
 
+  it("emits RecordAdded with the employee and record digest", async function () {
+    const { payrollManager, employer, operator, employeeA } = await deployFixture();
+
+    await (await payrollManager
+      .connect(employer)
+      .createBatch(operator.address, 202601, "ipfs://batch-event-record")).wait();
+
+    const recordDigest = ethers.id("record-event-a");
+    const tx = await payrollManager
+      .connect(operator)
+      .addRecord(1, employeeA.address, recordDigest);
+    const receipt = await tx.wait();
+    const args = getEventArgs(receipt, payrollManager, "RecordAdded");
+
+    assert.equal(args.batchId, 1n);
+    assert.equal(args.employee, employeeA.address);
+    assert.equal(args.recordDigest, recordDigest);
+  });
+
+  it("emits BatchApproved for a non-empty batch", async function () {
+    const { payrollManager, employer, operator, employeeA } = await deployFixture();
+
+    await (await payrollManager
+      .connect(employer)
+      .createBatch(operator.address, 202601, "ipfs://batch-event-approve")).wait();
+    await (await payrollManager
+      .connect(operator)
+      .addRecord(1, employeeA.address, ethers.id("record-approve-a"))).wait();
+
+    const tx = await payrollManager.connect(employer).approveBatch(1);
+    const receipt = await tx.wait();
+    const args = getEventArgs(receipt, payrollManager, "BatchApproved");
+
+    assert.equal(args.batchId, 1n);
+  });
+
   it("rejects closing a released batch before all claims are settled", async function () {
     const { payrollManager, employer, operator, employeeA, employeeB } =
       await deployFixture();
@@ -268,6 +304,37 @@ describe("PayrollManager", function () {
     assert.equal(closedSummary.claimedCount, 1n);
     assert.equal(closedSummary.remainingClaims, 0n);
     assert.equal(closedSummary.isClosable, false);
+  });
+
+  it("keeps the public batch summary non-closable while claims remain", async function () {
+    const { payrollManager, employer, operator, employeeA, employeeB, outsider } =
+      await deployFixture();
+
+    await (await payrollManager
+      .connect(employer)
+      .createBatch(operator.address, 202601, "ipfs://batch-summary-partial")).wait();
+    await (await payrollManager
+      .connect(operator)
+      .addRecord(1, employeeA.address, ethers.id("record-summary-a"))).wait();
+    await (await payrollManager
+      .connect(operator)
+      .addRecord(1, employeeB.address, ethers.id("record-summary-b"))).wait();
+    await (await payrollManager.connect(employer).approveBatch(1)).wait();
+    await (await payrollManager
+      .connect(operator)
+      .registerFunding(1, ethers.id("funding-summary-partial"))).wait();
+    await (await payrollManager.connect(operator).releaseBatch(1)).wait();
+    await (await payrollManager
+      .connect(employeeA)
+      .markClaimed(1, employeeA.address, ethers.id("settlement-summary-a"))).wait();
+
+    const summary = await payrollManager.connect(outsider).getBatchSummary(1);
+
+    assert.equal(summary.status, 3n);
+    assert.equal(summary.employeeCount, 2n);
+    assert.equal(summary.claimedCount, 1n);
+    assert.equal(summary.remainingClaims, 1n);
+    assert.equal(summary.isClosable, false);
   });
 
   it("rejects reading a payroll record from an unrelated address", async function () {

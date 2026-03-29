@@ -109,7 +109,7 @@ Checked:
 - restricted batch-detail reads for non-participants
 - public batch summaries for non-participants
 - public batch summaries showing claim progress and close readiness without exposing full batch details
-- public workflow event coverage for core lifecycle transitions
+- public workflow event coverage for core lifecycle transitions, including record registration and approval
 - closed-state restrictions after batch closure
 - mock vault funding and settlement callback history behavior
 - mock vault per-batch funding state tracking
