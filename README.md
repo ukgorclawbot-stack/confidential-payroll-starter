@@ -1,14 +1,46 @@
 # Confidential Payroll Starter Pack for Zama
 
-A documentation-first starter project exploring how confidential payroll can be built on top of Zama.
+A builder-oriented starter for exploring how confidential payroll workflows can be designed on top of Zama.
+
+This repository turns one practical real-world use case into something builders can read, run, and extend:
+
+- architecture and concept docs for confidential payroll
+- a workflow-first Solidity prototype
+- a completion-aware and value-aware mock vault
+- local reconciliation reporting in text, JSON, and Discord payload formats
+
+The core idea is simple:
+
+Payroll coordination should be able to happen onchain without exposing sensitive compensation data publicly.
 
 ## What this is
 
-This repository is a builder-oriented starter pack for one practical use case: payroll that can be coordinated onchain without exposing sensitive compensation data publicly.
+This repository is a starter pack for one concrete business-facing use case: payroll that can be coordinated onchain while keeping sensitive compensation data private.
 
 It focuses on a simple question:
 
 How should a confidential payroll system work if we want public execution, but private values?
+
+## Why this repo is useful
+
+Instead of treating confidentiality as an abstract capability, this project turns it into a workflow that builders can inspect end to end:
+
+- batch lifecycle and role model
+- record visibility and claim permissions
+- funding and settlement callback behavior
+- batch-level reconciliation and reporting outputs
+
+That makes it easier to reason about where confidential applications become useful in practice, especially for payroll, bonuses, reimbursements, contractor payouts, and treasury-controlled disbursements.
+
+## Quick start
+
+```bash
+npm install
+npm test
+npm run report:demo
+npm run report:demo:json
+npm run report:demo:discord
+```
 
 ## Why this matters
 
