@@ -45,6 +45,54 @@ function serializeBatchReconciliation(report) {
   return JSON.stringify(report, null, 2);
 }
 
+function buildDiscordWebhookPayload(report) {
+  let color = 15158332;
+
+  if (report.isCountSettled && report.isValueSettled) {
+    color = 5763719;
+  } else if (report.isFunded) {
+    color = 16098851;
+  }
+
+  return {
+    username: "Payroll Reconciliation Bot",
+    embeds: [
+      {
+        title: `Batch Reconciliation #${report.batchId}`,
+        color,
+        description: [
+          `Funded: ${report.isFunded}`,
+          `Count settled: ${report.isCountSettled}`,
+          `Value settled: ${report.isValueSettled}`
+        ].join("\n"),
+        fields: [
+          {
+            name: "Settlement Progress",
+            value: [
+              `expectedSettlementCount: ${report.expectedSettlementCount}`,
+              `settlementCount: ${report.settlementCount}`,
+              `remainingSettlementCount: ${report.remainingSettlementCount}`
+            ].join("\n"),
+            inline: true
+          },
+          {
+            name: "Value Accounting",
+            value: [
+              `fundingAmount: ${report.fundingAmount}`,
+              `settledAmount: ${report.settledAmount}`,
+              `remainingFundingAmount: ${report.remainingFundingAmount}`
+            ].join("\n"),
+            inline: true
+          }
+        ],
+        footer: {
+          text: "confidential-payroll-starter mock vault"
+        }
+      }
+    ]
+  };
+}
+
 function parseArgs(argv) {
   const options = {
     batchId: null,
@@ -76,6 +124,11 @@ function parseArgs(argv) {
 
     if (token === "--json") {
       options.output = "json";
+      continue;
+    }
+
+    if (token === "--discord") {
+      options.output = "discord";
       continue;
     }
 
@@ -185,6 +238,11 @@ async function main() {
     return;
   }
 
+  if (options.output === "discord") {
+    console.log(JSON.stringify(buildDiscordWebhookPayload(report), null, 2));
+    return;
+  }
+
   if (options.demo) {
     console.log(`demoMode: ${options.demo}`);
   }
@@ -205,6 +263,7 @@ module.exports = {
   normalizeBatchReconciliation,
   formatBatchReconciliation,
   serializeBatchReconciliation,
+  buildDiscordWebhookPayload,
   parseArgs,
   resolveOptions
 };

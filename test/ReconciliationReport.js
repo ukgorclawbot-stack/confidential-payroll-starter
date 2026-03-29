@@ -4,6 +4,7 @@ const {
   normalizeBatchReconciliation,
   formatBatchReconciliation,
   serializeBatchReconciliation,
+  buildDiscordWebhookPayload,
   resolveOptions
 } = require("../scripts/report-batch-reconciliation.cjs");
 
@@ -83,5 +84,36 @@ describe("report-batch-reconciliation script helpers", function () {
     assert.equal(fromEnv.output, "json");
     assert.equal(fromFlag.batchId, 1n);
     assert.equal(fromEnv.batchId, 1n);
+  });
+
+  it("builds a discord webhook payload from a reconciliation report", function () {
+    const payload = buildDiscordWebhookPayload({
+      batchId: "21",
+      isFunded: true,
+      isCountSettled: true,
+      isValueSettled: false,
+      expectedSettlementCount: "2",
+      settlementCount: "2",
+      remainingSettlementCount: "0",
+      fundingAmount: "1000",
+      settledAmount: "800",
+      remainingFundingAmount: "200"
+    });
+
+    assert.equal(payload.username, "Payroll Reconciliation Bot");
+    assert.equal(payload.embeds.length, 1);
+    assert.equal(payload.embeds[0].title, "Batch Reconciliation #21");
+    assert.equal(payload.embeds[0].color, 16098851);
+    assert.match(payload.embeds[0].description, /Count settled: true/);
+    assert.equal(payload.embeds[0].fields[0].name, "Settlement Progress");
+    assert.match(payload.embeds[0].fields[1].value, /fundingAmount: 1000/);
+  });
+
+  it("resolves discord output mode from cli flags or environment", function () {
+    const fromFlag = resolveOptions(["--discord"], {});
+    const fromEnv = resolveOptions([], { REPORT_OUTPUT: "discord" });
+
+    assert.equal(fromFlag.output, "discord");
+    assert.equal(fromEnv.output, "discord");
   });
 });

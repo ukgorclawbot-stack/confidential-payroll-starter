@@ -27,6 +27,12 @@ Run a partial demo batch as JSON:
 npm run report:demo:json
 ```
 
+Run a partial demo batch as a Discord webhook payload:
+
+```bash
+npm run report:demo:discord
+```
+
 Query an existing deployed mock vault:
 
 ```bash
@@ -39,4 +45,10 @@ To force JSON output for any invocation:
 
 ```bash
 REPORT_OUTPUT=json npx hardhat run scripts/report-batch-reconciliation.cjs
+```
+
+To force Discord webhook payload output:
+
+```bash
+REPORT_OUTPUT=discord npx hardhat run scripts/report-batch-reconciliation.cjs
 ```
