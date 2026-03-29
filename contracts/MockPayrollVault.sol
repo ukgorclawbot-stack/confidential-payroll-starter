@@ -20,15 +20,20 @@ contract MockPayrollVault is IPayrollVault {
 
     error BatchAlreadyFunded(uint256 batchId);
     error BatchNotFunded(uint256 batchId);
+    error BatchAlreadySettled(uint256 batchId);
+    error InvalidExpectedSettlementCount(uint256 batchId, uint256 expectedSettlementCount);
+    error ExpectedSettlementCountAlreadyConfigured(uint256 batchId);
     error SettlementAlreadyRecorded(uint256 batchId, address employee);
 
     event FundingRegistered(uint256 indexed batchId, address indexed payer, bytes32 fundingDigest);
+    event ExpectedSettlementCountConfigured(uint256 indexed batchId, uint256 expectedSettlementCount);
     event SettlementRegistered(
         uint256 indexed batchId,
         address indexed employee,
         bytes32 settlementDigest,
         uint256 settlementCount
     );
+    event BatchSettled(uint256 indexed batchId, uint256 settlementCount);
 
     uint256 public fundingCalls;
     uint256 public settlementCalls;
@@ -46,7 +51,10 @@ contract MockPayrollVault is IPayrollVault {
     FundingCall[] private _fundingHistory;
     SettlementCall[] private _settlementHistory;
     mapping(uint256 => bool) private _batchFunded;
+    mapping(uint256 => bool) private _batchSettled;
     mapping(uint256 => bytes32) private _fundingDigests;
+    mapping(uint256 => bool) private _expectedSettlementConfigured;
+    mapping(uint256 => uint256) private _expectedSettlementCounts;
     mapping(uint256 => uint256) private _settlementCounts;
     mapping(uint256 => mapping(address => bool)) private _settlementRecorded;
     mapping(uint256 => mapping(address => bytes32)) private _settlementDigests;
@@ -89,6 +97,7 @@ contract MockPayrollVault is IPayrollVault {
     ) external override {
         require(!rejectSettlement, "MockPayrollVault: settlement rejected");
         if (!_batchFunded[batchId]) revert BatchNotFunded(batchId);
+        if (_batchSettled[batchId]) revert BatchAlreadySettled(batchId);
         if (_settlementRecorded[batchId][employee]) {
             revert SettlementAlreadyRecorded(batchId, employee);
         }
@@ -107,6 +116,29 @@ contract MockPayrollVault is IPayrollVault {
         }));
 
         emit SettlementRegistered(batchId, employee, settlementDigest, _settlementCounts[batchId]);
+
+        if (
+            _expectedSettlementConfigured[batchId] &&
+            _settlementCounts[batchId] == _expectedSettlementCounts[batchId]
+        ) {
+            _batchSettled[batchId] = true;
+            emit BatchSettled(batchId, _settlementCounts[batchId]);
+        }
+    }
+
+    function setExpectedSettlementCount(uint256 batchId, uint256 expectedSettlementCount) external {
+        if (!_batchFunded[batchId]) revert BatchNotFunded(batchId);
+        if (expectedSettlementCount == 0) {
+            revert InvalidExpectedSettlementCount(batchId, expectedSettlementCount);
+        }
+        if (_expectedSettlementConfigured[batchId]) {
+            revert ExpectedSettlementCountAlreadyConfigured(batchId);
+        }
+
+        _expectedSettlementConfigured[batchId] = true;
+        _expectedSettlementCounts[batchId] = expectedSettlementCount;
+
+        emit ExpectedSettlementCountConfigured(batchId, expectedSettlementCount);
     }
 
     function getFundingCall(
@@ -129,6 +161,25 @@ contract MockPayrollVault is IPayrollVault {
 
     function getFundingDigest(uint256 batchId) external view returns (bytes32) {
         return _fundingDigests[batchId];
+    }
+
+    function isBatchSettled(uint256 batchId) external view returns (bool) {
+        return _batchSettled[batchId];
+    }
+
+    function getExpectedSettlementCount(uint256 batchId) external view returns (uint256) {
+        return _expectedSettlementCounts[batchId];
+    }
+
+    function getRemainingSettlementCount(uint256 batchId) external view returns (uint256) {
+        uint256 expectedSettlementCount = _expectedSettlementCounts[batchId];
+        uint256 settlementCount = _settlementCounts[batchId];
+
+        if (expectedSettlementCount <= settlementCount) {
+            return 0;
+        }
+
+        return expectedSettlementCount - settlementCount;
     }
 
     function isSettlementRecorded(uint256 batchId, address employee) external view returns (bool) {

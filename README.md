@@ -48,7 +48,7 @@ This project explores how Zama can support a better model for real-world busines
   Future settlement-layer interface
 
 - `contracts/MockPayrollVault.sol`
-  Minimal local vault stub used to verify funding and settlement callbacks, history, and rejection paths
+  Minimal local vault stub used to verify funding and settlement callbacks, history, rejection paths, and batch-settlement completion semantics
 
 - `contracts/PayrollManager.sol`
   Workflow-oriented prototype contract for batch lifecycle, claim tracking, and optional vault callbacks
@@ -83,7 +83,7 @@ Early builder contribution with a documentation-first workflow prototype.
 Current local validation includes:
 
 - Hardhat compile
-- 60 passing behavior tests across `PayrollManager` and `MockPayrollVault`
+- 63 passing behavior tests across `PayrollManager` and `MockPayrollVault`
 - batch details visible only to the batch employer, operator, or participating employee
 - public batch summaries available without exposing the full batch struct
 - public batch summaries expose workflow progress only through status, payroll period, employee count, claimed count, remaining claims, close readiness, and funding presence
@@ -104,8 +104,10 @@ Current local validation includes:
 - mock vault callback verification for funding and settlement history
 - mock vault per-batch funding and per-employee settlement state tracking
 - mock vault settlement counts isolated per batch
+- mock vault expected-settlement targets, remaining-settlement tracking, and settled-batch marking
 - mock vault funding and settlement event emissions covered by local tests
 - mock vault rejection of duplicate funding and duplicate settlement writes
+- mock vault rejection of extra settlements after a batch is marked settled
 - vault-side rejection rollback coverage for funding and settlement registration
 - payroll-layer custom errors for wrapped vault callback failures
 

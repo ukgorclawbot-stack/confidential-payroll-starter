@@ -1455,4 +1455,83 @@ describe("MockPayrollVault", function () {
     assert.equal(await mockVault.getSettlementCount(11), 2n);
     assert.equal(await mockVault.getSettlementCount(12), 1n);
   });
+
+  it("rejects configuring expected settlements before funding or with a zero target", async function () {
+    const { mockVault, caller } = await deployMockVaultFixture();
+
+    await assert.rejects(
+      mockVault.connect(caller).setExpectedSettlementCount(13, 1),
+      /BatchNotFunded/
+    );
+
+    await (await mockVault
+      .connect(caller)
+      .registerFunding(13, caller.address, ethers.id("vault-funding-13"))).wait();
+
+    await assert.rejects(
+      mockVault.connect(caller).setExpectedSettlementCount(13, 0),
+      /InvalidExpectedSettlementCount/
+    );
+  });
+
+  it("tracks remaining settlements and marks the batch settled at the expected count", async function () {
+    const { mockVault, caller, employee } = await deployMockVaultFixture();
+    const [, , secondEmployee] = await ethers.getSigners();
+
+    await (await mockVault
+      .connect(caller)
+      .registerFunding(14, caller.address, ethers.id("vault-funding-14"))).wait();
+
+    const configureTx = await mockVault.connect(caller).setExpectedSettlementCount(14, 2);
+    const configureReceipt = await configureTx.wait();
+    const configureArgs = getVaultEventArgs(
+      configureReceipt,
+      mockVault,
+      "ExpectedSettlementCountConfigured"
+    );
+
+    assert.equal(configureArgs.batchId, 14n);
+    assert.equal(configureArgs.expectedSettlementCount, 2n);
+    assert.equal(await mockVault.getExpectedSettlementCount(14), 2n);
+    assert.equal(await mockVault.getRemainingSettlementCount(14), 2n);
+    assert.equal(await mockVault.isBatchSettled(14), false);
+
+    await (await mockVault
+      .connect(caller)
+      .registerSettlement(14, employee.address, ethers.id("vault-settlement-14a"))).wait();
+
+    assert.equal(await mockVault.getRemainingSettlementCount(14), 1n);
+    assert.equal(await mockVault.isBatchSettled(14), false);
+
+    const settleTx = await mockVault
+      .connect(caller)
+      .registerSettlement(14, secondEmployee.address, ethers.id("vault-settlement-14b"));
+    const settleReceipt = await settleTx.wait();
+    const settleArgs = getVaultEventArgs(settleReceipt, mockVault, "BatchSettled");
+
+    assert.equal(settleArgs.batchId, 14n);
+    assert.equal(settleArgs.settlementCount, 2n);
+    assert.equal(await mockVault.getRemainingSettlementCount(14), 0n);
+    assert.equal(await mockVault.isBatchSettled(14), true);
+  });
+
+  it("rejects further settlements after the batch is marked settled", async function () {
+    const { mockVault, caller, employee } = await deployMockVaultFixture();
+    const [, , secondEmployee] = await ethers.getSigners();
+
+    await (await mockVault
+      .connect(caller)
+      .registerFunding(15, caller.address, ethers.id("vault-funding-15"))).wait();
+    await (await mockVault.connect(caller).setExpectedSettlementCount(15, 1)).wait();
+    await (await mockVault
+      .connect(caller)
+      .registerSettlement(15, employee.address, ethers.id("vault-settlement-15a"))).wait();
+
+    await assert.rejects(
+      mockVault
+        .connect(caller)
+        .registerSettlement(15, secondEmployee.address, ethers.id("vault-settlement-15b")),
+      /BatchAlreadySettled/
+    );
+  });
 });
