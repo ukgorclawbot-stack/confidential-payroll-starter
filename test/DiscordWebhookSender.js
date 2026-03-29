@@ -4,7 +4,9 @@ const {
   parseSendArgs,
   resolveSendOptions,
   buildDiscordWebhookRequest,
-  sendDiscordWebhook
+  sendDiscordWebhook,
+  formatDiscordDeliverySummary,
+  persistPayloadIfRequested
 } = require("../scripts/send-discord-webhook.cjs");
 
 describe("send-discord-webhook script helpers", function () {
@@ -47,6 +49,22 @@ describe("send-discord-webhook script helpers", function () {
     assert.equal(fromEnv.dryRun, true);
   });
 
+  it("formats a short delivery summary with optional payload file information", function () {
+    const summary = formatDiscordDeliverySummary({
+      batchId: "11",
+      isFunded: true,
+      isCountSettled: false,
+      isValueSettled: false
+    }, {
+      dryRun: false,
+      payloadFile: "/tmp/payload.json"
+    });
+
+    assert.match(summary, /discordWebhookDelivery: sent/);
+    assert.match(summary, /batchId=11/);
+    assert.match(summary, /payloadFile=\/tmp\/payload\.json/);
+  });
+
   it("builds a post request for the discord webhook", function () {
     const payload = {
       username: "Payroll Reconciliation Bot",
@@ -82,5 +100,32 @@ describe("send-discord-webhook script helpers", function () {
       ),
       /Discord webhook request failed with status 400: invalid webhook/
     );
+  });
+
+  it("writes the payload only when an output path is provided", async function () {
+    const calls = [];
+    const fsImpl = {
+      mkdir: async (directory, options) => {
+        calls.push(["mkdir", directory, options]);
+      },
+      writeFile: async (filePath, content) => {
+        calls.push(["writeFile", filePath, content]);
+      }
+    };
+
+    const payload = {
+      username: "Payroll Reconciliation Bot",
+      embeds: [{ title: "Batch Reconciliation #5" }]
+    };
+
+    const skipped = await persistPayloadIfRequested(payload, null, fsImpl);
+    const written = await persistPayloadIfRequested(payload, "/tmp/reports/payload.json", fsImpl);
+
+    assert.equal(skipped, false);
+    assert.equal(written, true);
+    assert.deepEqual(calls[0], ["mkdir", "/tmp/reports", { recursive: true }]);
+    assert.equal(calls[1][0], "writeFile");
+    assert.equal(calls[1][1], "/tmp/reports/payload.json");
+    assert.deepEqual(JSON.parse(calls[1][2]), payload);
   });
 });

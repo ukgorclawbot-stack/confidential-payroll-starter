@@ -1,3 +1,6 @@
+const fs = require("node:fs/promises");
+const path = require("node:path");
+
 const {
   normalizeBatchReconciliation,
   buildDiscordWebhookPayload,
@@ -9,6 +12,7 @@ function parseSendArgs(argv) {
   const options = {
     webhookUrl: null,
     timeoutMs: null,
+    payloadFile: null,
     dryRun: false,
     help: false
   };
@@ -24,6 +28,12 @@ function parseSendArgs(argv) {
 
     if (token === "--timeout-ms") {
       options.timeoutMs = Number(argv[index + 1]);
+      index += 1;
+      continue;
+    }
+
+    if (token === "--payload-file") {
+      options.payloadFile = argv[index + 1];
       index += 1;
       continue;
     }
@@ -53,6 +63,10 @@ function resolveSendOptions(argv, env = process.env) {
     sendOptions.timeoutMs = Number(env.DISCORD_WEBHOOK_TIMEOUT_MS);
   }
 
+  if (sendOptions.payloadFile === null && env.DISCORD_PAYLOAD_OUTPUT_FILE) {
+    sendOptions.payloadFile = env.DISCORD_PAYLOAD_OUTPUT_FILE;
+  }
+
   if (sendOptions.timeoutMs === null) {
     sendOptions.timeoutMs = 10000;
   }
@@ -65,6 +79,21 @@ function resolveSendOptions(argv, env = process.env) {
     ...reportOptions,
     ...sendOptions
   };
+}
+
+function formatDiscordDeliverySummary(report, options = {}) {
+  const deliveryStatus = options.dryRun ? "dry-run" : "sent";
+  const payloadSuffix = options.payloadFile
+    ? ` payloadFile=${options.payloadFile}`
+    : "";
+
+  return [
+    `discordWebhookDelivery: ${deliveryStatus}`,
+    `batchId=${report.batchId}`,
+    `isFunded=${report.isFunded}`,
+    `isCountSettled=${report.isCountSettled}`,
+    `isValueSettled=${report.isValueSettled}${payloadSuffix}`
+  ].join(" ");
 }
 
 function buildDiscordWebhookRequest(webhookUrl, payload) {
@@ -134,11 +163,22 @@ async function sendDiscordWebhook(request, options = {}) {
   }
 }
 
+async function persistPayloadIfRequested(payload, payloadFile, fsImpl = fs) {
+  if (!payloadFile) {
+    return false;
+  }
+
+  await fsImpl.mkdir(path.dirname(payloadFile), { recursive: true });
+  await fsImpl.writeFile(payloadFile, JSON.stringify(payload, null, 2));
+  return true;
+}
+
 function printUsage() {
   console.log("Usage:");
   console.log("  DISCORD_WEBHOOK_URL=<webhook> REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs");
   console.log("  DISCORD_WEBHOOK_URL=<webhook> REPORT_VAULT_ADDRESS=<vault> REPORT_BATCH_ID=7 npx hardhat run scripts/send-discord-webhook.cjs");
   console.log("  DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs");
+  console.log("  DISCORD_PAYLOAD_OUTPUT_FILE=./reports/payload.json DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs");
 }
 
 async function main() {
@@ -155,15 +195,17 @@ async function main() {
     await mockVault.getBatchReconciliation(options.batchId)
   );
   const payload = buildDiscordWebhookPayload(report);
+  await persistPayloadIfRequested(payload, options.payloadFile);
 
   if (options.dryRun) {
     console.log(JSON.stringify(payload, null, 2));
+    console.log(formatDiscordDeliverySummary(report, options));
     return;
   }
 
   const request = buildDiscordWebhookRequest(options.webhookUrl, payload);
   await sendDiscordWebhook(request, { timeoutMs: options.timeoutMs });
-  console.log(`sentDiscordWebhookForBatch: ${report.batchId}`);
+  console.log(formatDiscordDeliverySummary(report, options));
 }
 
 if (require.main === module) {
@@ -176,6 +218,8 @@ if (require.main === module) {
 module.exports = {
   parseSendArgs,
   resolveSendOptions,
+  formatDiscordDeliverySummary,
   buildDiscordWebhookRequest,
-  sendDiscordWebhook
+  sendDiscordWebhook,
+  persistPayloadIfRequested
 };

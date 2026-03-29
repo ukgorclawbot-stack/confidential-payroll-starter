@@ -76,6 +76,8 @@ That makes the repo useful in two directions at once:
 
 If you want to wire the reporting output into a live operational channel, the repository now also includes a Discord webhook sender script that can deliver the generated embed payload directly when `DISCORD_WEBHOOK_URL` is provided via environment variable or CLI flag.
 
+If `DISCORD_PAYLOAD_OUTPUT_FILE` is set, the sender will also save the final webhook payload JSON to disk and print a short delivery summary after dry-run or successful delivery.
+
 ## Architecture at a glance
 
 ```mermaid

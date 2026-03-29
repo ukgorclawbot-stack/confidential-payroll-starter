@@ -45,6 +45,12 @@ Preview the webhook payload that would be sent:
 npm run report:demo:discord:send:dry-run
 ```
 
+Preview the payload and save it to disk:
+
+```bash
+DISCORD_PAYLOAD_OUTPUT_FILE=./reports/discord-payload.json npm run report:demo:discord:send:dry-run
+```
+
 Send a partial demo batch to a real Discord webhook:
 
 ```bash
@@ -94,6 +100,9 @@ Optional sender flags:
 ```bash
 DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs
 DISCORD_WEBHOOK_URL=<your-webhook-url> DISCORD_WEBHOOK_TIMEOUT_MS=15000 REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs
+DISCORD_PAYLOAD_OUTPUT_FILE=./reports/discord-payload.json DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs
 ```
+
+When `DISCORD_PAYLOAD_OUTPUT_FILE` is set, the sender writes the final webhook payload JSON to disk before printing the short delivery summary.
 
 The publish helper only pushes committed changes and aborts if the subtree path is dirty.
