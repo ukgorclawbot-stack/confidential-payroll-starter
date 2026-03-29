@@ -221,7 +221,9 @@ describe("PayrollManager", function () {
     assert.equal(summary.payrollPeriod, 202601n);
     assert.equal(summary.employeeCount, 1n);
     assert.equal(summary.claimedCount, 0n);
+    assert.equal(summary.remainingClaims, 1n);
     assert.equal(summary.hasFunding, false);
+    assert.equal(summary.isClosable, false);
   });
 
   it("updates the public batch summary as workflow state changes", async function () {
@@ -235,7 +237,9 @@ describe("PayrollManager", function () {
       .getBatchSummary(1);
     assert.equal(approvedSummary.status, 1n);
     assert.equal(approvedSummary.claimedCount, 0n);
+    assert.equal(approvedSummary.remainingClaims, 1n);
     assert.equal(approvedSummary.hasFunding, false);
+    assert.equal(approvedSummary.isClosable, false);
 
     await (await payrollManager
       .connect(operator)
@@ -250,8 +254,20 @@ describe("PayrollManager", function () {
       .getBatchSummary(1);
     assert.equal(releasedSummary.status, 3n);
     assert.equal(releasedSummary.claimedCount, 1n);
+    assert.equal(releasedSummary.remainingClaims, 0n);
     assert.equal(releasedSummary.hasFunding, true);
     assert.equal(releasedSummary.employeeCount, 1n);
+    assert.equal(releasedSummary.isClosable, true);
+
+    await (await payrollManager.connect(employer).closeBatch(1)).wait();
+
+    const closedSummary = await payrollManager
+      .connect(outsider)
+      .getBatchSummary(1);
+    assert.equal(closedSummary.status, 4n);
+    assert.equal(closedSummary.claimedCount, 1n);
+    assert.equal(closedSummary.remainingClaims, 0n);
+    assert.equal(closedSummary.isClosable, false);
   });
 
   it("rejects reading a payroll record from an unrelated address", async function () {

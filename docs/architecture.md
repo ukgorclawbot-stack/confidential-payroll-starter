@@ -150,7 +150,7 @@ For an MVP, the claim model is often easier to reason about because it separates
 - whether an employee has claimed
 - limited metadata required for operational observability
 
-In the current prototype, that public or semi-public observability is modeled through events, workflow transitions, and a limited public batch summary view rather than unrestricted full-struct reads. That summary exposes only workflow-level fields such as status, payroll period, employee count, claimed count, and funding presence. Full batch reads are restricted to the employer, operator, or a participating employee.
+In the current prototype, that public or semi-public observability is modeled through events, workflow transitions, and a limited public batch summary view rather than unrestricted full-struct reads. That summary exposes only workflow-level fields such as status, payroll period, employee count, claimed count, remaining claims, close readiness, and funding presence. Full batch reads are restricted to the employer, operator, or a participating employee.
 
 ## Example batch lifecycle
 

@@ -189,13 +189,16 @@ contract PayrollManager {
 
     function getBatchSummary(uint256 batchId) external view returns (PayrollTypes.BatchSummary memory) {
         PayrollTypes.Batch storage batch = _requireBatch(batchId);
+        uint32 claimedCount = _claimedCounts[batchId];
 
         return PayrollTypes.BatchSummary({
             status: batch.status,
             payrollPeriod: batch.payrollPeriod,
             employeeCount: batch.employeeCount,
-            claimedCount: _claimedCounts[batchId],
-            hasFunding: batch.fundingDigest != bytes32(0)
+            claimedCount: claimedCount,
+            remainingClaims: batch.employeeCount - claimedCount,
+            hasFunding: batch.fundingDigest != bytes32(0),
+            isClosable: batch.status == PayrollTypes.BatchStatus.Released && claimedCount == batch.employeeCount
         });
     }
 

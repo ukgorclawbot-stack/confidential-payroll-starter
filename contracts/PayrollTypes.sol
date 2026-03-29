@@ -27,7 +27,9 @@ library PayrollTypes {
         uint64 payrollPeriod;
         uint32 employeeCount;
         uint32 claimedCount;
+        uint32 remainingClaims;
         bool hasFunding;
+        bool isClosable;
     }
 
     /// @notice Stores an opaque reference to confidential payroll data.

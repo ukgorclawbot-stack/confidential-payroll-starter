@@ -103,7 +103,7 @@ The batch may include public or semi-public metadata such as:
 
 This provides operational visibility without exposing compensation data.
 
-In this prototype, the full batch struct is not treated as universally readable. Instead, full batch reads are limited to the employer, operator, or a participating employee, while broader observability comes from events, state transitions, and a limited public batch summary. That summary exposes workflow-level fields such as status, payroll period, employee count, claimed count, and funding presence, without exposing the full struct or record-level details.
+In this prototype, the full batch struct is not treated as universally readable. Instead, full batch reads are limited to the employer, operator, or a participating employee, while broader observability comes from events, state transitions, and a limited public batch summary. That summary exposes workflow-level fields such as status, payroll period, employee count, claimed count, remaining claims, close readiness, and funding presence, without exposing the full struct or record-level details.
 
 ### Step 2: Add confidential employee records
 
