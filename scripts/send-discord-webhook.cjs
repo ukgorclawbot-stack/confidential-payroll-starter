@@ -13,6 +13,7 @@ function parseSendArgs(argv) {
     webhookUrl: null,
     timeoutMs: null,
     payloadFile: null,
+    timestampedPayloadFile: false,
     dryRun: false,
     help: false
   };
@@ -35,6 +36,11 @@ function parseSendArgs(argv) {
     if (token === "--payload-file") {
       options.payloadFile = argv[index + 1];
       index += 1;
+      continue;
+    }
+
+    if (token === "--timestamped-payload-file") {
+      options.timestampedPayloadFile = true;
       continue;
     }
 
@@ -75,10 +81,32 @@ function resolveSendOptions(argv, env = process.env) {
     sendOptions.dryRun = true;
   }
 
+  if (!sendOptions.timestampedPayloadFile && env.DISCORD_PAYLOAD_TIMESTAMPED === "true") {
+    sendOptions.timestampedPayloadFile = true;
+  }
+
   return {
     ...reportOptions,
     ...sendOptions
   };
+}
+
+function formatTimestampForFile(now) {
+  return now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+
+function resolvePayloadOutputFile(payloadFile, options = {}) {
+  if (!payloadFile) {
+    return null;
+  }
+
+  if (!options.timestampedPayloadFile) {
+    return payloadFile;
+  }
+
+  const parsedPath = path.parse(payloadFile);
+  const timestamp = formatTimestampForFile(options.now || new Date());
+  return path.join(parsedPath.dir, `${parsedPath.name}-${timestamp}${parsedPath.ext}`);
 }
 
 function formatDiscordDeliverySummary(report, options = {}) {
@@ -179,6 +207,7 @@ function printUsage() {
   console.log("  DISCORD_WEBHOOK_URL=<webhook> REPORT_VAULT_ADDRESS=<vault> REPORT_BATCH_ID=7 npx hardhat run scripts/send-discord-webhook.cjs");
   console.log("  DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs");
   console.log("  DISCORD_PAYLOAD_OUTPUT_FILE=./reports/payload.json DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs");
+  console.log("  DISCORD_PAYLOAD_OUTPUT_FILE=./reports/payload.json DISCORD_PAYLOAD_TIMESTAMPED=true DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs");
 }
 
 async function main() {
@@ -195,17 +224,22 @@ async function main() {
     await mockVault.getBatchReconciliation(options.batchId)
   );
   const payload = buildDiscordWebhookPayload(report);
-  await persistPayloadIfRequested(payload, options.payloadFile);
+  const resolvedPayloadFile = resolvePayloadOutputFile(options.payloadFile, options);
+  await persistPayloadIfRequested(payload, resolvedPayloadFile);
+  const summaryOptions = {
+    ...options,
+    payloadFile: resolvedPayloadFile
+  };
 
   if (options.dryRun) {
     console.log(JSON.stringify(payload, null, 2));
-    console.log(formatDiscordDeliverySummary(report, options));
+    console.log(formatDiscordDeliverySummary(report, summaryOptions));
     return;
   }
 
   const request = buildDiscordWebhookRequest(options.webhookUrl, payload);
   await sendDiscordWebhook(request, { timeoutMs: options.timeoutMs });
-  console.log(formatDiscordDeliverySummary(report, options));
+  console.log(formatDiscordDeliverySummary(report, summaryOptions));
 }
 
 if (require.main === module) {
@@ -218,6 +252,7 @@ if (require.main === module) {
 module.exports = {
   parseSendArgs,
   resolveSendOptions,
+  resolvePayloadOutputFile,
   formatDiscordDeliverySummary,
   buildDiscordWebhookRequest,
   sendDiscordWebhook,

@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const {
   parseSendArgs,
   resolveSendOptions,
+  resolvePayloadOutputFile,
   buildDiscordWebhookRequest,
   sendDiscordWebhook,
   formatDiscordDeliverySummary,
@@ -34,7 +35,9 @@ describe("send-discord-webhook script helpers", function () {
       REPORT_BATCH_ID: "9",
       DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/env/token",
       DISCORD_WEBHOOK_TIMEOUT_MS: "15000",
-      DISCORD_WEBHOOK_DRY_RUN: "true"
+      DISCORD_WEBHOOK_DRY_RUN: "true",
+      DISCORD_PAYLOAD_OUTPUT_FILE: "./reports/payload.json",
+      DISCORD_PAYLOAD_TIMESTAMPED: "true"
     });
 
     assert.equal(fromFlag.demo, "partial");
@@ -47,6 +50,22 @@ describe("send-discord-webhook script helpers", function () {
     assert.equal(fromEnv.webhookUrl, "https://discord.com/api/webhooks/env/token");
     assert.equal(fromEnv.timeoutMs, 15000);
     assert.equal(fromEnv.dryRun, true);
+    assert.equal(fromEnv.payloadFile, "./reports/payload.json");
+    assert.equal(fromEnv.timestampedPayloadFile, true);
+  });
+
+  it("builds a timestamped payload file path when timestamp mode is enabled", function () {
+    const timestamped = resolvePayloadOutputFile("/tmp/payload.json", {
+      timestampedPayloadFile: true,
+      now: new Date("2026-03-29T08:09:10Z")
+    });
+    const unchanged = resolvePayloadOutputFile("/tmp/payload.json", {
+      timestampedPayloadFile: false,
+      now: new Date("2026-03-29T08:09:10Z")
+    });
+
+    assert.equal(timestamped, "/tmp/payload-20260329T080910Z.json");
+    assert.equal(unchanged, "/tmp/payload.json");
   });
 
   it("formats a short delivery summary with optional payload file information", function () {
