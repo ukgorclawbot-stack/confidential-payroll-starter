@@ -1,5 +1,11 @@
 # Confidential Payroll Starter Pack for Zama
 
+![status](https://img.shields.io/badge/status-prototype-2563eb)
+![validation](https://img.shields.io/badge/tests-local%20passing-16a34a)
+![solidity](https://img.shields.io/badge/solidity-0.8.24-7c3aed)
+![reporting](https://img.shields.io/badge/reporting-text%20%7C%20json%20%7C%20discord-0f766e)
+![repo](https://img.shields.io/badge/repo-public-f59e0b)
+
 A builder-oriented starter for exploring how confidential payroll workflows can be designed on top of Zama.
 
 This repository turns one practical real-world use case into something builders can read, run, and extend:
@@ -40,6 +46,65 @@ npm test
 npm run report:demo
 npm run report:demo:json
 npm run report:demo:discord
+```
+
+## Project status
+
+| Area | Current status |
+| --- | --- |
+| Workflow model | Batch lifecycle, record visibility, claim permissions, and close rules are implemented in the prototype |
+| Vault mock | Funding callbacks, settlement callbacks, completion semantics, value-accounting semantics, and reconciliation views are covered |
+| Reporting | Text, JSON, and Discord webhook payload outputs are available locally |
+| Validation | `75` passing local tests across contracts and reporting helpers |
+| Not claimed yet | Real FHE integration, real token settlement, and production deployment guarantees are intentionally out of scope |
+
+## Sample output
+
+Text report:
+
+```text
+Batch Reconciliation Report
+batchId: 1
+isFunded: true
+isCountSettled: false
+isValueSettled: false
+expectedSettlementCount: 2
+settlementCount: 1
+remainingSettlementCount: 1
+fundingAmount: 1000
+settledAmount: 400
+remainingFundingAmount: 600
+```
+
+JSON report:
+
+```json
+{
+  "batchId": "1",
+  "isFunded": true,
+  "isCountSettled": false,
+  "isValueSettled": false,
+  "expectedSettlementCount": "2",
+  "settlementCount": "1",
+  "remainingSettlementCount": "1",
+  "fundingAmount": "1000",
+  "settledAmount": "400",
+  "remainingFundingAmount": "600"
+}
+```
+
+Discord webhook payload:
+
+```json
+{
+  "username": "Payroll Reconciliation Bot",
+  "embeds": [
+    {
+      "title": "Batch Reconciliation #1",
+      "description": "Funded: true\nCount settled: false\nValue settled: false"
+    }
+  ]
+}
 ```
 
 ## Why this matters
