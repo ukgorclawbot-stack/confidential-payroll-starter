@@ -1654,4 +1654,66 @@ describe("MockPayrollVault", function () {
       /SettlementExceedsFundingAmount/
     );
   });
+
+  it("reports a partial batch reconciliation view", async function () {
+    const { mockVault, caller, employee } = await deployMockVaultFixture();
+
+    const settlementDigest = ethers.id("vault-settlement-20a");
+
+    await (await mockVault
+      .connect(caller)
+      .registerFunding(20, caller.address, ethers.id("vault-funding-20"))).wait();
+    await (await mockVault.connect(caller).setExpectedSettlementCount(20, 2)).wait();
+    await (await mockVault.connect(caller).setFundingAmount(20, 1_000)).wait();
+    await (await mockVault.connect(caller).setSettlementAmount(settlementDigest, 400)).wait();
+    await (await mockVault
+      .connect(caller)
+      .registerSettlement(20, employee.address, settlementDigest)).wait();
+
+    const summary = await mockVault.getBatchReconciliation(20);
+
+    assert.equal(summary.isFunded, true);
+    assert.equal(summary.isCountSettled, false);
+    assert.equal(summary.isValueSettled, false);
+    assert.equal(summary.expectedSettlementCount, 2n);
+    assert.equal(summary.settlementCount, 1n);
+    assert.equal(summary.remainingSettlementCount, 1n);
+    assert.equal(summary.fundingAmount, 1_000n);
+    assert.equal(summary.settledAmount, 400n);
+    assert.equal(summary.remainingFundingAmount, 600n);
+  });
+
+  it("reports a fully settled batch reconciliation view", async function () {
+    const { mockVault, caller, employee } = await deployMockVaultFixture();
+    const [, , secondEmployee] = await ethers.getSigners();
+
+    const settlementDigestA = ethers.id("vault-settlement-21a");
+    const settlementDigestB = ethers.id("vault-settlement-21b");
+
+    await (await mockVault
+      .connect(caller)
+      .registerFunding(21, caller.address, ethers.id("vault-funding-21"))).wait();
+    await (await mockVault.connect(caller).setExpectedSettlementCount(21, 2)).wait();
+    await (await mockVault.connect(caller).setFundingAmount(21, 1_000)).wait();
+    await (await mockVault.connect(caller).setSettlementAmount(settlementDigestA, 400)).wait();
+    await (await mockVault.connect(caller).setSettlementAmount(settlementDigestB, 600)).wait();
+    await (await mockVault
+      .connect(caller)
+      .registerSettlement(21, employee.address, settlementDigestA)).wait();
+    await (await mockVault
+      .connect(caller)
+      .registerSettlement(21, secondEmployee.address, settlementDigestB)).wait();
+
+    const summary = await mockVault.getBatchReconciliation(21);
+
+    assert.equal(summary.isFunded, true);
+    assert.equal(summary.isCountSettled, true);
+    assert.equal(summary.isValueSettled, true);
+    assert.equal(summary.expectedSettlementCount, 2n);
+    assert.equal(summary.settlementCount, 2n);
+    assert.equal(summary.remainingSettlementCount, 0n);
+    assert.equal(summary.fundingAmount, 1_000n);
+    assert.equal(summary.settledAmount, 1_000n);
+    assert.equal(summary.remainingFundingAmount, 0n);
+  });
 });

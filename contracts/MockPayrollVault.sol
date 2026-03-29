@@ -18,6 +18,18 @@ contract MockPayrollVault is IPayrollVault {
         bytes32 settlementDigest;
     }
 
+    struct BatchReconciliation {
+        bool isFunded;
+        bool isCountSettled;
+        bool isValueSettled;
+        uint256 expectedSettlementCount;
+        uint256 settlementCount;
+        uint256 remainingSettlementCount;
+        uint256 fundingAmount;
+        uint256 settledAmount;
+        uint256 remainingFundingAmount;
+    }
+
     error BatchAlreadyFunded(uint256 batchId);
     error BatchNotFunded(uint256 batchId);
     error BatchAlreadySettled(uint256 batchId);
@@ -285,5 +297,34 @@ contract MockPayrollVault is IPayrollVault {
 
     function getSettlementCount(uint256 batchId) external view returns (uint256) {
         return _settlementCounts[batchId];
+    }
+
+    function getBatchReconciliation(uint256 batchId) external view returns (BatchReconciliation memory) {
+        uint256 expectedSettlementCount = _expectedSettlementCounts[batchId];
+        uint256 settlementCount = _settlementCounts[batchId];
+        uint256 fundingAmount = _fundingAmounts[batchId];
+        uint256 settledAmount = _settledAmounts[batchId];
+
+        uint256 remainingSettlementCount;
+        if (expectedSettlementCount > settlementCount) {
+            remainingSettlementCount = expectedSettlementCount - settlementCount;
+        }
+
+        uint256 remainingFundingAmount;
+        if (fundingAmount > settledAmount) {
+            remainingFundingAmount = fundingAmount - settledAmount;
+        }
+
+        return BatchReconciliation({
+            isFunded: _batchFunded[batchId],
+            isCountSettled: _batchSettled[batchId],
+            isValueSettled: fundingAmount != 0 && settledAmount == fundingAmount,
+            expectedSettlementCount: expectedSettlementCount,
+            settlementCount: settlementCount,
+            remainingSettlementCount: remainingSettlementCount,
+            fundingAmount: fundingAmount,
+            settledAmount: settledAmount,
+            remainingFundingAmount: remainingFundingAmount
+        });
     }
 }

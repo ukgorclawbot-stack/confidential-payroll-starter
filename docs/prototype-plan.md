@@ -119,6 +119,7 @@ Checked:
 - mock vault expected settlement target and remaining-settlement tracking
 - mock vault settled-batch marking and post-completion settlement rejection
 - mock vault optional funding-amount and settled-amount tracking
+- mock vault batch-level reconciliation reporting for completion and funding state
 - mock vault rejection of settlements that exceed configured funding amounts
 - mock vault duplicate funding and settlement rejection
 - mock vault funding and settlement event emissions

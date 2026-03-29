@@ -89,6 +89,7 @@ The current prototype is locally exercised through the Hardhat test suite, inclu
 - vault expected settlement count configuration and remaining-settlement tracking
 - vault batch-settled marking once the expected settlement target is reached
 - vault optional funding-amount configuration, settled-amount tracking, and remaining-funding reads
+- vault batch-level reconciliation reporting for count-based and value-based settlement state
 - vault rejection of settlements that would exceed the configured funding amount
 - vault event emissions covered for funding and settlement registration
 - vault rejection of duplicate funding and duplicate settlement writes
