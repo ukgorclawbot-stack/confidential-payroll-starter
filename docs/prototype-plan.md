@@ -69,7 +69,7 @@ The next tests should focus on privacy and settlement semantics beyond the curre
 Recommended next tests:
 
 - vault error decoding expectations beyond the current custom payroll-layer wrapping
-- public batch summary semantics versus restricted batch-detail reads
+- public batch summary semantics versus restricted batch-detail reads and claim-progress visibility
 - event payload stability if the public event surface expands further
 
 ### Step 3: Introduce a vault stub
@@ -108,6 +108,7 @@ Checked:
 - claim authorization isolation across multiple concurrent batches
 - restricted batch-detail reads for non-participants
 - public batch summaries for non-participants
+- public batch summaries showing claim progress without exposing full batch details
 - public workflow event coverage for core lifecycle transitions
 - closed-state restrictions after batch closure
 - mock vault funding and settlement callback history behavior

@@ -220,6 +220,7 @@ describe("PayrollManager", function () {
     assert.equal(summary.status, 0n);
     assert.equal(summary.payrollPeriod, 202601n);
     assert.equal(summary.employeeCount, 1n);
+    assert.equal(summary.claimedCount, 0n);
     assert.equal(summary.hasFunding, false);
   });
 
@@ -233,17 +234,22 @@ describe("PayrollManager", function () {
       .connect(outsider)
       .getBatchSummary(1);
     assert.equal(approvedSummary.status, 1n);
+    assert.equal(approvedSummary.claimedCount, 0n);
     assert.equal(approvedSummary.hasFunding, false);
 
     await (await payrollManager
       .connect(operator)
       .registerFunding(1, ethers.id("funding-summary"))).wait();
     await (await payrollManager.connect(operator).releaseBatch(1)).wait();
+    await (await payrollManager
+      .connect(employeeA)
+      .markClaimed(1, employeeA.address, ethers.id("settlement-summary"))).wait();
 
     const releasedSummary = await payrollManager
       .connect(outsider)
       .getBatchSummary(1);
     assert.equal(releasedSummary.status, 3n);
+    assert.equal(releasedSummary.claimedCount, 1n);
     assert.equal(releasedSummary.hasFunding, true);
     assert.equal(releasedSummary.employeeCount, 1n);
   });

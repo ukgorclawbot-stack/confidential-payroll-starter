@@ -194,6 +194,7 @@ contract PayrollManager {
             status: batch.status,
             payrollPeriod: batch.payrollPeriod,
             employeeCount: batch.employeeCount,
+            claimedCount: _claimedCounts[batchId],
             hasFunding: batch.fundingDigest != bytes32(0)
         });
     }

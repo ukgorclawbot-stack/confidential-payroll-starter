@@ -26,6 +26,7 @@ library PayrollTypes {
         BatchStatus status;
         uint64 payrollPeriod;
         uint32 employeeCount;
+        uint32 claimedCount;
         bool hasFunding;
     }
 
