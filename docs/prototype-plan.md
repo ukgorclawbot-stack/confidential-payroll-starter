@@ -41,6 +41,7 @@ It demonstrates:
 - the minimum actor model
 - where confidential data references would live
 - where settlement and proof systems would later connect
+- how reconciliation state can be surfaced through a local reporting helper
 
 ## Current contract split
 
@@ -121,6 +122,7 @@ Checked:
 - mock vault optional funding-amount and settled-amount tracking
 - mock vault batch-level reconciliation reporting for completion and funding state
 - mock vault rejection of settlements that exceed configured funding amounts
+- local reconciliation report helper for demo and inspection flows
 - mock vault duplicate funding and settlement rejection
 - mock vault funding and settlement event emissions
 - vault-side rejection rollback behavior

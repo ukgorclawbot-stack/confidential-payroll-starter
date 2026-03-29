@@ -62,8 +62,11 @@ This project explores how Zama can support a better model for real-world busines
 - `package.json`
   Local scripts and dev dependencies for the prototype harness
 
+- `scripts/report-batch-reconciliation.cjs`
+  Read-only helper for printing `MockPayrollVault` batch reconciliation summaries
+
 - `scripts/`
-  Placeholder for future helper scripts and local workflows
+  Helper scripts and usage notes for local reporting flows
 
 ## MVP goal
 
@@ -83,7 +86,7 @@ Early builder contribution with a documentation-first workflow prototype.
 Current local validation includes:
 
 - Hardhat compile
-- 69 passing behavior tests across `PayrollManager` and `MockPayrollVault`
+- 71 passing tests across `PayrollManager`, `MockPayrollVault`, and reporting helpers
 - batch details visible only to the batch employer, operator, or participating employee
 - public batch summaries available without exposing the full batch struct
 - public batch summaries expose workflow progress only through status, payroll period, employee count, claimed count, remaining claims, close readiness, and funding presence
@@ -111,6 +114,7 @@ Current local validation includes:
 - mock vault value-accounting event coverage and over-settlement rejection
 - mock vault rejection of duplicate funding and duplicate settlement writes
 - mock vault rejection of extra settlements after a batch is marked settled
+- local reconciliation report script with demo mode and formatter helper coverage
 - vault-side rejection rollback coverage for funding and settlement registration
 - payroll-layer custom errors for wrapped vault callback failures
 

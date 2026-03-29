@@ -5,7 +5,9 @@
   "description": "Minimal local test harness for the confidential payroll starter prototype.",
   "scripts": {
     "compile": "hardhat compile",
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "report:demo": "REPORT_DEMO_MODE=partial hardhat run scripts/report-batch-reconciliation.cjs",
+    "report:demo:settled": "REPORT_DEMO_MODE=settled hardhat run scripts/report-batch-reconciliation.cjs"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.8",
