@@ -83,7 +83,7 @@ Early builder contribution with a documentation-first workflow prototype.
 Current local validation includes:
 
 - Hardhat compile
-- 49 passing behavior tests across `PayrollManager` and `MockPayrollVault`
+- 51 passing behavior tests across `PayrollManager` and `MockPayrollVault`
 - batch details visible only to the batch employer, operator, or participating employee
 - public batch summaries available without exposing the full batch struct
 - public workflow events covered for batch creation, funding, claiming, and closure
@@ -100,6 +100,8 @@ Current local validation includes:
 - final-state restrictions after batch closure
 - mock vault callback verification for funding and settlement history
 - mock vault per-batch funding and per-employee settlement state tracking
+- mock vault settlement counts isolated per batch
+- mock vault funding and settlement event emissions covered by local tests
 - mock vault rejection of duplicate funding and duplicate settlement writes
 - vault-side rejection rollback coverage for funding and settlement registration
 - payroll-layer custom errors for wrapped vault callback failures

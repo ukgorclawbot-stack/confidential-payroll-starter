@@ -22,6 +22,14 @@ contract MockPayrollVault is IPayrollVault {
     error BatchNotFunded(uint256 batchId);
     error SettlementAlreadyRecorded(uint256 batchId, address employee);
 
+    event FundingRegistered(uint256 indexed batchId, address indexed payer, bytes32 fundingDigest);
+    event SettlementRegistered(
+        uint256 indexed batchId,
+        address indexed employee,
+        bytes32 settlementDigest,
+        uint256 settlementCount
+    );
+
     uint256 public fundingCalls;
     uint256 public settlementCalls;
     bool public rejectFunding;
@@ -39,6 +47,7 @@ contract MockPayrollVault is IPayrollVault {
     SettlementCall[] private _settlementHistory;
     mapping(uint256 => bool) private _batchFunded;
     mapping(uint256 => bytes32) private _fundingDigests;
+    mapping(uint256 => uint256) private _settlementCounts;
     mapping(uint256 => mapping(address => bool)) private _settlementRecorded;
     mapping(uint256 => mapping(address => bytes32)) private _settlementDigests;
 
@@ -69,6 +78,8 @@ contract MockPayrollVault is IPayrollVault {
             payer: payer,
             fundingDigest: fundingDigest
         }));
+
+        emit FundingRegistered(batchId, payer, fundingDigest);
     }
 
     function registerSettlement(
@@ -86,6 +97,7 @@ contract MockPayrollVault is IPayrollVault {
         lastSettlementBatchId = batchId;
         lastSettlementEmployee = employee;
         lastSettlementDigest = settlementDigest;
+        _settlementCounts[batchId] += 1;
         _settlementRecorded[batchId][employee] = true;
         _settlementDigests[batchId][employee] = settlementDigest;
         _settlementHistory.push(SettlementCall({
@@ -93,6 +105,8 @@ contract MockPayrollVault is IPayrollVault {
             employee: employee,
             settlementDigest: settlementDigest
         }));
+
+        emit SettlementRegistered(batchId, employee, settlementDigest, _settlementCounts[batchId]);
     }
 
     function getFundingCall(
@@ -123,5 +137,9 @@ contract MockPayrollVault is IPayrollVault {
 
     function getSettlementDigest(uint256 batchId, address employee) external view returns (bytes32) {
         return _settlementDigests[batchId][employee];
+    }
+
+    function getSettlementCount(uint256 batchId) external view returns (uint256) {
+        return _settlementCounts[batchId];
     }
 }

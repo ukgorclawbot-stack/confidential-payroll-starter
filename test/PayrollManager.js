@@ -1149,6 +1149,21 @@ describe("PayrollManager", function () {
 });
 
 describe("MockPayrollVault", function () {
+  function getVaultEventArgs(receipt, contract, eventName) {
+    for (const log of receipt.logs) {
+      try {
+        const parsed = contract.interface.parseLog(log);
+        if (parsed && parsed.name === eventName) {
+          return parsed.args;
+        }
+      } catch {
+        // Ignore logs from other contracts.
+      }
+    }
+
+    throw new Error(`Missing vault event: ${eventName}`);
+  }
+
   async function deployMockVaultFixture() {
     const [caller, employee] = await ethers.getSigners();
     const MockPayrollVault = await ethers.getContractFactory("MockPayrollVault");
@@ -1218,5 +1233,63 @@ describe("MockPayrollVault", function () {
         .registerSettlement(9, employee.address, ethers.id("vault-settlement-b")),
       /SettlementAlreadyRecorded/
     );
+  });
+
+  it("emits funding and settlement events with per-batch settlement counts", async function () {
+    const { mockVault, caller, employee } = await deployMockVaultFixture();
+
+    const fundingDigest = ethers.id("vault-funding-event");
+    const settlementDigest = ethers.id("vault-settlement-event");
+
+    const fundingTx = await mockVault
+      .connect(caller)
+      .registerFunding(10, caller.address, fundingDigest);
+    const fundingReceipt = await fundingTx.wait();
+    const fundingArgs = getVaultEventArgs(fundingReceipt, mockVault, "FundingRegistered");
+
+    assert.equal(fundingArgs.batchId, 10n);
+    assert.equal(fundingArgs.payer, caller.address);
+    assert.equal(fundingArgs.fundingDigest, fundingDigest);
+
+    const settlementTx = await mockVault
+      .connect(caller)
+      .registerSettlement(10, employee.address, settlementDigest);
+    const settlementReceipt = await settlementTx.wait();
+    const settlementArgs = getVaultEventArgs(
+      settlementReceipt,
+      mockVault,
+      "SettlementRegistered"
+    );
+
+    assert.equal(settlementArgs.batchId, 10n);
+    assert.equal(settlementArgs.employee, employee.address);
+    assert.equal(settlementArgs.settlementDigest, settlementDigest);
+    assert.equal(settlementArgs.settlementCount, 1n);
+    assert.equal(await mockVault.getSettlementCount(10), 1n);
+  });
+
+  it("keeps settlement counts isolated per batch", async function () {
+    const { mockVault, caller, employee } = await deployMockVaultFixture();
+    const [, , secondEmployee] = await ethers.getSigners();
+
+    await (await mockVault
+      .connect(caller)
+      .registerFunding(11, caller.address, ethers.id("vault-funding-11"))).wait();
+    await (await mockVault
+      .connect(caller)
+      .registerFunding(12, caller.address, ethers.id("vault-funding-12"))).wait();
+
+    await (await mockVault
+      .connect(caller)
+      .registerSettlement(11, employee.address, ethers.id("vault-settlement-11a"))).wait();
+    await (await mockVault
+      .connect(caller)
+      .registerSettlement(11, secondEmployee.address, ethers.id("vault-settlement-11b"))).wait();
+    await (await mockVault
+      .connect(caller)
+      .registerSettlement(12, employee.address, ethers.id("vault-settlement-12a"))).wait();
+
+    assert.equal(await mockVault.getSettlementCount(11), 2n);
+    assert.equal(await mockVault.getSettlementCount(12), 1n);
   });
 });

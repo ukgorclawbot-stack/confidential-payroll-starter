@@ -85,6 +85,8 @@ The current prototype is locally exercised through the Hardhat test suite, inclu
 - final-state restrictions after batch closure
 - vault callback registration history for funding and settlement
 - vault per-batch funding state and per-employee settlement state tracking
+- vault settlement counts isolated per batch
+- vault event emissions covered for funding and settlement registration
 - vault rejection of duplicate funding and duplicate settlement writes
 - vault-side rejection rollback for funding and settlement registration
 - payroll-layer custom errors for vault callback failures
