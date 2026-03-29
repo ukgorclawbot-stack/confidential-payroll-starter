@@ -51,7 +51,7 @@ It demonstrates:
   Placeholder settlement interface
 
 - `contracts/MockPayrollVault.sol`
-  Minimal local settlement stub for funding and claim callback verification plus completion-aware settlement tracking
+  Minimal local settlement stub for funding and claim callback verification plus completion-aware settlement tracking and optional value-accounting behavior
 
 - `contracts/PayrollManager.sol`
   Workflow-oriented state machine for payroll batches and employee records
@@ -74,7 +74,7 @@ Recommended next tests:
 
 ### Step 3: Introduce a vault stub
 
-This step is now done through `MockPayrollVault`. The stub now tracks per-batch funding, per-employee settlement state, per-batch settlement counts, expected settlement targets, remaining settlements, settled-batch completion state, callback history, controlled rejection paths, and local event emissions.
+This step is now done through `MockPayrollVault`. The stub now tracks per-batch funding, per-employee settlement state, per-batch settlement counts, expected settlement targets, remaining settlements, settled-batch completion state, optional funding and settlement amounts, remaining funding, callback history, controlled rejection paths, and local event emissions.
 
 ### Step 4: Explore confidentiality boundary options
 
@@ -118,6 +118,8 @@ Checked:
 - mock vault per-batch settlement count tracking
 - mock vault expected settlement target and remaining-settlement tracking
 - mock vault settled-batch marking and post-completion settlement rejection
+- mock vault optional funding-amount and settled-amount tracking
+- mock vault rejection of settlements that exceed configured funding amounts
 - mock vault duplicate funding and settlement rejection
 - mock vault funding and settlement event emissions
 - vault-side rejection rollback behavior

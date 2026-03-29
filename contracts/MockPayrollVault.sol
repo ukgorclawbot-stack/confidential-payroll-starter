@@ -21,19 +21,34 @@ contract MockPayrollVault is IPayrollVault {
     error BatchAlreadyFunded(uint256 batchId);
     error BatchNotFunded(uint256 batchId);
     error BatchAlreadySettled(uint256 batchId);
+    error InvalidFundingAmount(uint256 batchId, uint256 fundingAmount);
+    error FundingAmountAlreadyConfigured(uint256 batchId);
     error InvalidExpectedSettlementCount(uint256 batchId, uint256 expectedSettlementCount);
     error ExpectedSettlementCountAlreadyConfigured(uint256 batchId);
+    error InvalidSettlementAmount(bytes32 settlementDigest, uint256 settlementAmount);
+    error SettlementAmountAlreadyConfigured(bytes32 settlementDigest);
+    error SettlementAmountNotConfigured(bytes32 settlementDigest);
+    error SettlementExceedsFundingAmount(uint256 batchId, uint256 fundingAmount, uint256 attemptedSettledAmount);
     error SettlementAlreadyRecorded(uint256 batchId, address employee);
 
     event FundingRegistered(uint256 indexed batchId, address indexed payer, bytes32 fundingDigest);
+    event FundingAmountConfigured(uint256 indexed batchId, uint256 fundingAmount);
     event ExpectedSettlementCountConfigured(uint256 indexed batchId, uint256 expectedSettlementCount);
+    event SettlementAmountConfigured(bytes32 indexed settlementDigest, uint256 settlementAmount);
     event SettlementRegistered(
         uint256 indexed batchId,
         address indexed employee,
         bytes32 settlementDigest,
         uint256 settlementCount
     );
+    event SettlementValueApplied(
+        uint256 indexed batchId,
+        address indexed employee,
+        uint256 settlementAmount,
+        uint256 totalSettledAmount
+    );
     event BatchSettled(uint256 indexed batchId, uint256 settlementCount);
+    event BatchValueSettled(uint256 indexed batchId, uint256 settledAmount);
 
     uint256 public fundingCalls;
     uint256 public settlementCalls;
@@ -53,9 +68,13 @@ contract MockPayrollVault is IPayrollVault {
     mapping(uint256 => bool) private _batchFunded;
     mapping(uint256 => bool) private _batchSettled;
     mapping(uint256 => bytes32) private _fundingDigests;
+    mapping(uint256 => uint256) private _fundingAmounts;
     mapping(uint256 => bool) private _expectedSettlementConfigured;
     mapping(uint256 => uint256) private _expectedSettlementCounts;
     mapping(uint256 => uint256) private _settlementCounts;
+    mapping(uint256 => uint256) private _settledAmounts;
+    mapping(bytes32 => bool) private _settlementAmountConfigured;
+    mapping(bytes32 => uint256) private _settlementAmounts;
     mapping(uint256 => mapping(address => bool)) private _settlementRecorded;
     mapping(uint256 => mapping(address => bytes32)) private _settlementDigests;
 
@@ -102,6 +121,25 @@ contract MockPayrollVault is IPayrollVault {
             revert SettlementAlreadyRecorded(batchId, employee);
         }
 
+        uint256 settlementAmount;
+        if (_fundingAmounts[batchId] != 0) {
+            if (!_settlementAmountConfigured[settlementDigest]) {
+                revert SettlementAmountNotConfigured(settlementDigest);
+            }
+
+            settlementAmount = _settlementAmounts[settlementDigest];
+            uint256 attemptedSettledAmount = _settledAmounts[batchId] + settlementAmount;
+            if (attemptedSettledAmount > _fundingAmounts[batchId]) {
+                revert SettlementExceedsFundingAmount(
+                    batchId,
+                    _fundingAmounts[batchId],
+                    attemptedSettledAmount
+                );
+            }
+
+            _settledAmounts[batchId] = attemptedSettledAmount;
+        }
+
         settlementCalls += 1;
         lastSettlementBatchId = batchId;
         lastSettlementEmployee = employee;
@@ -117,12 +155,20 @@ contract MockPayrollVault is IPayrollVault {
 
         emit SettlementRegistered(batchId, employee, settlementDigest, _settlementCounts[batchId]);
 
+        if (settlementAmount != 0) {
+            emit SettlementValueApplied(batchId, employee, settlementAmount, _settledAmounts[batchId]);
+        }
+
         if (
             _expectedSettlementConfigured[batchId] &&
             _settlementCounts[batchId] == _expectedSettlementCounts[batchId]
         ) {
             _batchSettled[batchId] = true;
             emit BatchSettled(batchId, _settlementCounts[batchId]);
+        }
+
+        if (_fundingAmounts[batchId] != 0 && _settledAmounts[batchId] == _fundingAmounts[batchId]) {
+            emit BatchValueSettled(batchId, _settledAmounts[batchId]);
         }
     }
 
@@ -139,6 +185,30 @@ contract MockPayrollVault is IPayrollVault {
         _expectedSettlementCounts[batchId] = expectedSettlementCount;
 
         emit ExpectedSettlementCountConfigured(batchId, expectedSettlementCount);
+    }
+
+    function setFundingAmount(uint256 batchId, uint256 fundingAmount) external {
+        if (!_batchFunded[batchId]) revert BatchNotFunded(batchId);
+        if (fundingAmount == 0) revert InvalidFundingAmount(batchId, fundingAmount);
+        if (_fundingAmounts[batchId] != 0) revert FundingAmountAlreadyConfigured(batchId);
+
+        _fundingAmounts[batchId] = fundingAmount;
+
+        emit FundingAmountConfigured(batchId, fundingAmount);
+    }
+
+    function setSettlementAmount(bytes32 settlementDigest, uint256 settlementAmount) external {
+        if (settlementAmount == 0) {
+            revert InvalidSettlementAmount(settlementDigest, settlementAmount);
+        }
+        if (_settlementAmountConfigured[settlementDigest]) {
+            revert SettlementAmountAlreadyConfigured(settlementDigest);
+        }
+
+        _settlementAmountConfigured[settlementDigest] = true;
+        _settlementAmounts[settlementDigest] = settlementAmount;
+
+        emit SettlementAmountConfigured(settlementDigest, settlementAmount);
     }
 
     function getFundingCall(
@@ -163,8 +233,16 @@ contract MockPayrollVault is IPayrollVault {
         return _fundingDigests[batchId];
     }
 
+    function getFundingAmount(uint256 batchId) external view returns (uint256) {
+        return _fundingAmounts[batchId];
+    }
+
     function isBatchSettled(uint256 batchId) external view returns (bool) {
         return _batchSettled[batchId];
+    }
+
+    function isBatchValueSettled(uint256 batchId) external view returns (bool) {
+        return _fundingAmounts[batchId] != 0 && _settledAmounts[batchId] == _fundingAmounts[batchId];
     }
 
     function getExpectedSettlementCount(uint256 batchId) external view returns (uint256) {
@@ -180,6 +258,21 @@ contract MockPayrollVault is IPayrollVault {
         }
 
         return expectedSettlementCount - settlementCount;
+    }
+
+    function getSettledAmount(uint256 batchId) external view returns (uint256) {
+        return _settledAmounts[batchId];
+    }
+
+    function getRemainingFundingAmount(uint256 batchId) external view returns (uint256) {
+        uint256 fundingAmount = _fundingAmounts[batchId];
+        uint256 settledAmount = _settledAmounts[batchId];
+
+        if (fundingAmount <= settledAmount) {
+            return 0;
+        }
+
+        return fundingAmount - settledAmount;
     }
 
     function isSettlementRecorded(uint256 batchId, address employee) external view returns (bool) {

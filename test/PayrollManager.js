@@ -1534,4 +1534,124 @@ describe("MockPayrollVault", function () {
       /BatchAlreadySettled/
     );
   });
+
+  it("rejects configuring a funding amount before funding or with invalid values", async function () {
+    const { mockVault, caller } = await deployMockVaultFixture();
+
+    await assert.rejects(
+      mockVault.connect(caller).setFundingAmount(16, 1_000),
+      /BatchNotFunded/
+    );
+
+    await (await mockVault
+      .connect(caller)
+      .registerFunding(16, caller.address, ethers.id("vault-funding-16"))).wait();
+
+    await assert.rejects(
+      mockVault.connect(caller).setFundingAmount(16, 0),
+      /InvalidFundingAmount/
+    );
+
+    await (await mockVault.connect(caller).setFundingAmount(16, 1_000)).wait();
+
+    assert.equal(await mockVault.getFundingAmount(16), 1_000n);
+    assert.equal(await mockVault.getSettledAmount(16), 0n);
+    assert.equal(await mockVault.getRemainingFundingAmount(16), 1_000n);
+    assert.equal(await mockVault.isBatchValueSettled(16), false);
+
+    await assert.rejects(
+      mockVault.connect(caller).setFundingAmount(16, 2_000),
+      /FundingAmountAlreadyConfigured/
+    );
+  });
+
+  it("rejects settlement registration without a configured settlement amount when value accounting is enabled", async function () {
+    const { mockVault, caller, employee } = await deployMockVaultFixture();
+
+    await (await mockVault
+      .connect(caller)
+      .registerFunding(17, caller.address, ethers.id("vault-funding-17"))).wait();
+    await (await mockVault.connect(caller).setFundingAmount(17, 500)).wait();
+
+    await assert.rejects(
+      mockVault
+        .connect(caller)
+        .registerSettlement(17, employee.address, ethers.id("vault-settlement-17a")),
+      /SettlementAmountNotConfigured/
+    );
+  });
+
+  it("applies configured settlement amounts and marks the batch value-settled when fully allocated", async function () {
+    const { mockVault, caller, employee } = await deployMockVaultFixture();
+    const [, , secondEmployee] = await ethers.getSigners();
+
+    const settlementDigestA = ethers.id("vault-settlement-18a");
+    const settlementDigestB = ethers.id("vault-settlement-18b");
+
+    await (await mockVault
+      .connect(caller)
+      .registerFunding(18, caller.address, ethers.id("vault-funding-18"))).wait();
+    await (await mockVault.connect(caller).setFundingAmount(18, 1_000)).wait();
+    await (await mockVault.connect(caller).setSettlementAmount(settlementDigestA, 400)).wait();
+    await (await mockVault.connect(caller).setSettlementAmount(settlementDigestB, 600)).wait();
+
+    const firstSettlementTx = await mockVault
+      .connect(caller)
+      .registerSettlement(18, employee.address, settlementDigestA);
+    const firstSettlementReceipt = await firstSettlementTx.wait();
+    const firstValueArgs = getVaultEventArgs(
+      firstSettlementReceipt,
+      mockVault,
+      "SettlementValueApplied"
+    );
+
+    assert.equal(firstValueArgs.batchId, 18n);
+    assert.equal(firstValueArgs.employee, employee.address);
+    assert.equal(firstValueArgs.settlementAmount, 400n);
+    assert.equal(firstValueArgs.totalSettledAmount, 400n);
+    assert.equal(await mockVault.getSettledAmount(18), 400n);
+    assert.equal(await mockVault.getRemainingFundingAmount(18), 600n);
+    assert.equal(await mockVault.isBatchValueSettled(18), false);
+
+    const secondSettlementTx = await mockVault
+      .connect(caller)
+      .registerSettlement(18, secondEmployee.address, settlementDigestB);
+    const secondSettlementReceipt = await secondSettlementTx.wait();
+    const valueSettledArgs = getVaultEventArgs(
+      secondSettlementReceipt,
+      mockVault,
+      "BatchValueSettled"
+    );
+
+    assert.equal(valueSettledArgs.batchId, 18n);
+    assert.equal(valueSettledArgs.settledAmount, 1_000n);
+    assert.equal(await mockVault.getSettledAmount(18), 1_000n);
+    assert.equal(await mockVault.getRemainingFundingAmount(18), 0n);
+    assert.equal(await mockVault.isBatchValueSettled(18), true);
+  });
+
+  it("rejects settlements that exceed the configured funding amount", async function () {
+    const { mockVault, caller, employee } = await deployMockVaultFixture();
+    const [, , secondEmployee] = await ethers.getSigners();
+
+    const settlementDigestA = ethers.id("vault-settlement-19a");
+    const settlementDigestB = ethers.id("vault-settlement-19b");
+
+    await (await mockVault
+      .connect(caller)
+      .registerFunding(19, caller.address, ethers.id("vault-funding-19"))).wait();
+    await (await mockVault.connect(caller).setFundingAmount(19, 500)).wait();
+    await (await mockVault.connect(caller).setSettlementAmount(settlementDigestA, 400)).wait();
+    await (await mockVault.connect(caller).setSettlementAmount(settlementDigestB, 200)).wait();
+    await (await mockVault
+      .connect(caller)
+      .registerSettlement(19, employee.address, settlementDigestA)).wait();
+
+    await assert.rejects(
+      mockVault
+        .connect(caller)
+        .registerSettlement(19, secondEmployee.address, settlementDigestB),
+      /SettlementExceedsFundingAmount/
+    );
+  });
 });

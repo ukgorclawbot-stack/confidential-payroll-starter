@@ -13,7 +13,7 @@ The current contract set is intentionally narrow. It models batch lifecycle, rol
   Placeholder settlement interface for future funding and payout integration
 
 - `MockPayrollVault.sol`
-  Minimal local vault stub used by the Hardhat test suite, including callback history, controlled rejection toggles, and settlement-completion tracking
+  Minimal local vault stub used by the Hardhat test suite, including callback history, controlled rejection toggles, settlement-completion tracking, and optional value-accounting semantics
 
 - `PayrollManager.sol`
   Workflow-oriented state machine for payroll batches, employee record digests, and optional vault callbacks
@@ -88,6 +88,8 @@ The current prototype is locally exercised through the Hardhat test suite, inclu
 - vault settlement counts isolated per batch
 - vault expected settlement count configuration and remaining-settlement tracking
 - vault batch-settled marking once the expected settlement target is reached
+- vault optional funding-amount configuration, settled-amount tracking, and remaining-funding reads
+- vault rejection of settlements that would exceed the configured funding amount
 - vault event emissions covered for funding and settlement registration
 - vault rejection of duplicate funding and duplicate settlement writes
 - vault rejection of additional settlements after a batch is marked settled
@@ -98,5 +100,5 @@ The current prototype is locally exercised through the Hardhat test suite, inclu
 
 The next milestone should be:
 
-- decide whether the mock vault should evolve from completion-aware settlement tracking into a value-accounting stub
+- decide whether the mock vault should evolve from an optional value-accounting stub into a real settlement simulator
 - extend the prototype without overstating confidentiality guarantees
