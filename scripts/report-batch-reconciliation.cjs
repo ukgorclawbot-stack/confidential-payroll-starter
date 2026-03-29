@@ -175,7 +175,7 @@ function printUsage() {
   console.log("  REPORT_DEMO_MODE=partial npx hardhat run scripts/report-batch-reconciliation.cjs");
   console.log("  REPORT_DEMO_MODE=settled REPORT_BATCH_ID=2 npx hardhat run scripts/report-batch-reconciliation.cjs");
   console.log("  REPORT_VAULT_ADDRESS=<vault> REPORT_BATCH_ID=7 npx hardhat run scripts/report-batch-reconciliation.cjs");
-  console.log("  node scripts/report-batch-reconciliation.cjs --demo partial");
+  console.log("  REPORT_DEMO_MODE=partial REPORT_OUTPUT=json npx hardhat run scripts/report-batch-reconciliation.cjs");
 }
 
 async function seedDemoBatch(mockVault, caller, batchId, demoMode) {
@@ -265,5 +265,6 @@ module.exports = {
   serializeBatchReconciliation,
   buildDiscordWebhookPayload,
   parseArgs,
-  resolveOptions
+  resolveOptions,
+  loadVaultFromOptions
 };

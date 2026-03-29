@@ -46,6 +46,7 @@ npm test
 npm run report:demo
 npm run report:demo:json
 npm run report:demo:discord
+npm run report:demo:discord:send:dry-run
 ```
 
 ## Project status
@@ -72,6 +73,8 @@ That makes the repo useful in two directions at once:
 
 - as a technical starter for implementation
 - as a portfolio artifact that shows applied thinking around real-world confidential finance
+
+If you want to wire the reporting output into a live operational channel, the repository now also includes a Discord webhook sender script that can deliver the generated embed payload directly when `DISCORD_WEBHOOK_URL` is provided via environment variable or CLI flag.
 
 ## Architecture at a glance
 
