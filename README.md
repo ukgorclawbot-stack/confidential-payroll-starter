@@ -58,6 +58,21 @@ npm run report:demo:discord
 | Validation | `75` passing local tests across contracts and reporting helpers |
 | Not claimed yet | Real FHE integration, real token settlement, and production deployment guarantees are intentionally out of scope |
 
+## How to use this in a builder workflow
+
+One practical way to use this repository is:
+
+1. read the docs to understand the product problem and privacy boundary
+2. run the local tests to verify the workflow skeleton and guardrails
+3. generate a reconciliation report to show what operational outputs look like
+4. use the docs plus report outputs as builder-facing material for grant, bounty, or contributor applications
+5. extend the prototype toward a real settlement layer, dashboard, or confidential-compute integration
+
+That makes the repo useful in two directions at once:
+
+- as a technical starter for implementation
+- as a portfolio artifact that shows applied thinking around real-world confidential finance
+
 ## Architecture at a glance
 
 ```mermaid
