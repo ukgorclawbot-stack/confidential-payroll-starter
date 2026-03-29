@@ -13,7 +13,9 @@
     "report:demo:json": "REPORT_DEMO_MODE=partial REPORT_OUTPUT=json hardhat run scripts/report-batch-reconciliation.cjs",
     "report:demo:discord": "REPORT_DEMO_MODE=partial REPORT_OUTPUT=discord hardhat run scripts/report-batch-reconciliation.cjs",
     "report:demo:discord:send:dry-run": "REPORT_DEMO_MODE=partial DISCORD_WEBHOOK_DRY_RUN=true hardhat run scripts/send-discord-webhook.cjs",
-    "report:demo:discord:send": "REPORT_DEMO_MODE=partial hardhat run scripts/send-discord-webhook.cjs"
+    "report:demo:discord:send": "REPORT_DEMO_MODE=partial hardhat run scripts/send-discord-webhook.cjs",
+    "report:delivery-log": "hardhat run scripts/report-discord-delivery-log.cjs",
+    "report:delivery-log:json": "REPORT_OUTPUT=json hardhat run scripts/report-discord-delivery-log.cjs"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.8",

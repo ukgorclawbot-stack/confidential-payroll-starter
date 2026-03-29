@@ -80,6 +80,8 @@ If `DISCORD_PAYLOAD_OUTPUT_FILE` is set, the sender will also save the final web
 
 If `DISCORD_DELIVERY_LOG_FILE` is set, the sender also appends a local JSONL delivery index entry per dry-run or successful send, so reporting activity can be inspected later without parsing console history.
 
+The repository now also includes a small reader script for that JSONL log, so you can turn the local delivery index back into a quick text or JSON summary.
+
 ## Architecture at a glance
 
 ```mermaid

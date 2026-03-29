@@ -10,6 +10,9 @@ This directory now contains small helper scripts for local prototype inspection.
 - `send-discord-webhook.cjs`
   Reuses the reconciliation report flow and delivers the Discord webhook payload to a real webhook URL.
 
+- `report-discord-delivery-log.cjs`
+  Reads the local `jsonl` delivery index and prints a short summary in text or JSON form.
+
 - `publish-subtree.sh`
   Publishes the committed `confidential-payroll-starter/` subtree history to GitHub.
 
@@ -69,6 +72,18 @@ Send a partial demo batch to a real Discord webhook:
 DISCORD_WEBHOOK_URL=<your-webhook-url> npm run report:demo:discord:send
 ```
 
+Read the local delivery log summary:
+
+```bash
+DISCORD_DELIVERY_LOG_FILE=./reports/discord-delivery.jsonl npm run report:delivery-log
+```
+
+Read the same summary as JSON:
+
+```bash
+DISCORD_DELIVERY_LOG_FILE=./reports/discord-delivery.jsonl npm run report:delivery-log:json
+```
+
 Dry-run the GitHub subtree publish command:
 
 ```bash
@@ -120,5 +135,7 @@ DISCORD_DELIVERY_LOG_FILE=./reports/discord-delivery.jsonl DISCORD_WEBHOOK_DRY_R
 When `DISCORD_PAYLOAD_OUTPUT_FILE` is set, the sender writes the final webhook payload JSON to disk before printing the short delivery summary. If `DISCORD_PAYLOAD_TIMESTAMPED=true` is also set, the sender appends a UTC timestamp to the file name to avoid overwriting the previous payload.
 
 When `DISCORD_DELIVERY_LOG_FILE` is set, the sender appends one JSONL record per dry-run or successful delivery. This local log index is useful for later grep, tail, or automation handoff.
+
+The delivery-log report script reads that JSONL index back and summarizes total entries, sent vs dry-run counts, and the latest recorded batch/timestamp.
 
 The publish helper only pushes committed changes and aborts if the subtree path is dirty.
