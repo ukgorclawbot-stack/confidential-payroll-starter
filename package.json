@@ -5,6 +5,8 @@
   "description": "Minimal local test harness for the confidential payroll starter prototype.",
   "scripts": {
     "compile": "hardhat compile",
+    "publish:github": "bash scripts/publish-subtree.sh",
+    "publish:github:dry-run": "bash scripts/publish-subtree.sh --dry-run",
     "test": "hardhat test",
     "report:demo": "REPORT_DEMO_MODE=partial hardhat run scripts/report-batch-reconciliation.cjs",
     "report:demo:settled": "REPORT_DEMO_MODE=settled hardhat run scripts/report-batch-reconciliation.cjs",

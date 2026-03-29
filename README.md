@@ -66,7 +66,7 @@ This project explores how Zama can support a better model for real-world busines
   Read-only helper for printing `MockPayrollVault` batch reconciliation summaries as text, JSON, or Discord webhook payload JSON
 
 - `scripts/`
-  Helper scripts and usage notes for local reporting flows
+  Helper scripts and usage notes for local reporting and GitHub publish flows
 
 ## MVP goal
 
@@ -111,6 +111,7 @@ Current local validation includes:
 - mock vault optional funding-amount, settled-amount, and remaining-funding accounting
 - mock vault batch-level reconciliation reporting for settlement counts and value accounting
 - local reconciliation report script with text, JSON, and Discord webhook payload output modes
+- subtree publish helper for syncing the committed starter directory back to GitHub
 - mock vault funding and settlement event emissions covered by local tests
 - mock vault value-accounting event coverage and over-settlement rejection
 - mock vault rejection of duplicate funding and duplicate settlement writes

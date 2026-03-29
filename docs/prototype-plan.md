@@ -122,6 +122,7 @@ Checked:
 - mock vault optional funding-amount and settled-amount tracking
 - mock vault batch-level reconciliation reporting for completion and funding state
 - local reconciliation report script with text, JSON, and Discord webhook payload outputs
+- subtree publish helper for syncing the starter directory to its standalone GitHub repo
 - mock vault rejection of settlements that exceed configured funding amounts
 - local reconciliation report helper for demo and inspection flows
 - mock vault duplicate funding and settlement rejection
