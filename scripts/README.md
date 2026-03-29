@@ -57,6 +57,12 @@ Preview the payload and save it with an automatic timestamped filename:
 DISCORD_PAYLOAD_OUTPUT_FILE=./reports/discord-payload.json DISCORD_PAYLOAD_TIMESTAMPED=true npm run report:demo:discord:send:dry-run
 ```
 
+Preview the payload and append a local delivery log index:
+
+```bash
+DISCORD_DELIVERY_LOG_FILE=./reports/discord-delivery.jsonl npm run report:demo:discord:send:dry-run
+```
+
 Send a partial demo batch to a real Discord webhook:
 
 ```bash
@@ -108,8 +114,11 @@ DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/se
 DISCORD_WEBHOOK_URL=<your-webhook-url> DISCORD_WEBHOOK_TIMEOUT_MS=15000 REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs
 DISCORD_PAYLOAD_OUTPUT_FILE=./reports/discord-payload.json DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs
 DISCORD_PAYLOAD_OUTPUT_FILE=./reports/discord-payload.json DISCORD_PAYLOAD_TIMESTAMPED=true DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs
+DISCORD_DELIVERY_LOG_FILE=./reports/discord-delivery.jsonl DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs
 ```
 
 When `DISCORD_PAYLOAD_OUTPUT_FILE` is set, the sender writes the final webhook payload JSON to disk before printing the short delivery summary. If `DISCORD_PAYLOAD_TIMESTAMPED=true` is also set, the sender appends a UTC timestamp to the file name to avoid overwriting the previous payload.
+
+When `DISCORD_DELIVERY_LOG_FILE` is set, the sender appends one JSONL record per dry-run or successful delivery. This local log index is useful for later grep, tail, or automation handoff.
 
 The publish helper only pushes committed changes and aborts if the subtree path is dirty.

@@ -13,6 +13,7 @@ function parseSendArgs(argv) {
     webhookUrl: null,
     timeoutMs: null,
     payloadFile: null,
+    deliveryLogFile: null,
     timestampedPayloadFile: false,
     dryRun: false,
     help: false
@@ -35,6 +36,12 @@ function parseSendArgs(argv) {
 
     if (token === "--payload-file") {
       options.payloadFile = argv[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (token === "--delivery-log-file") {
+      options.deliveryLogFile = argv[index + 1];
       index += 1;
       continue;
     }
@@ -71,6 +78,10 @@ function resolveSendOptions(argv, env = process.env) {
 
   if (sendOptions.payloadFile === null && env.DISCORD_PAYLOAD_OUTPUT_FILE) {
     sendOptions.payloadFile = env.DISCORD_PAYLOAD_OUTPUT_FILE;
+  }
+
+  if (sendOptions.deliveryLogFile === null && env.DISCORD_DELIVERY_LOG_FILE) {
+    sendOptions.deliveryLogFile = env.DISCORD_DELIVERY_LOG_FILE;
   }
 
   if (sendOptions.timeoutMs === null) {
@@ -114,14 +125,29 @@ function formatDiscordDeliverySummary(report, options = {}) {
   const payloadSuffix = options.payloadFile
     ? ` payloadFile=${options.payloadFile}`
     : "";
+  const logSuffix = options.deliveryLogFile
+    ? ` logFile=${options.deliveryLogFile}`
+    : "";
 
   return [
     `discordWebhookDelivery: ${deliveryStatus}`,
     `batchId=${report.batchId}`,
     `isFunded=${report.isFunded}`,
     `isCountSettled=${report.isCountSettled}`,
-    `isValueSettled=${report.isValueSettled}${payloadSuffix}`
+    `isValueSettled=${report.isValueSettled}${payloadSuffix}${logSuffix}`
   ].join(" ");
+}
+
+function buildDeliveryLogEntry(report, options = {}, { now = new Date() } = {}) {
+  return {
+    timestamp: now.toISOString(),
+    batchId: report.batchId,
+    deliveryStatus: options.dryRun ? "dry-run" : "sent",
+    payloadFile: options.payloadFile || null,
+    isFunded: report.isFunded,
+    isCountSettled: report.isCountSettled,
+    isValueSettled: report.isValueSettled
+  };
 }
 
 function buildDiscordWebhookRequest(webhookUrl, payload) {
@@ -201,6 +227,16 @@ async function persistPayloadIfRequested(payload, payloadFile, fsImpl = fs) {
   return true;
 }
 
+async function appendDeliveryLogIfRequested(logEntry, deliveryLogFile, fsImpl = fs) {
+  if (!deliveryLogFile) {
+    return false;
+  }
+
+  await fsImpl.mkdir(path.dirname(deliveryLogFile), { recursive: true });
+  await fsImpl.appendFile(deliveryLogFile, `${JSON.stringify(logEntry)}\n`);
+  return true;
+}
+
 function printUsage() {
   console.log("Usage:");
   console.log("  DISCORD_WEBHOOK_URL=<webhook> REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs");
@@ -208,6 +244,7 @@ function printUsage() {
   console.log("  DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs");
   console.log("  DISCORD_PAYLOAD_OUTPUT_FILE=./reports/payload.json DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs");
   console.log("  DISCORD_PAYLOAD_OUTPUT_FILE=./reports/payload.json DISCORD_PAYLOAD_TIMESTAMPED=true DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs");
+  console.log("  DISCORD_DELIVERY_LOG_FILE=./reports/discord-delivery.jsonl DISCORD_WEBHOOK_DRY_RUN=true REPORT_DEMO_MODE=partial npx hardhat run scripts/send-discord-webhook.cjs");
 }
 
 async function main() {
@@ -232,6 +269,8 @@ async function main() {
   };
 
   if (options.dryRun) {
+    const logEntry = buildDeliveryLogEntry(report, summaryOptions);
+    await appendDeliveryLogIfRequested(logEntry, summaryOptions.deliveryLogFile);
     console.log(JSON.stringify(payload, null, 2));
     console.log(formatDiscordDeliverySummary(report, summaryOptions));
     return;
@@ -239,6 +278,8 @@ async function main() {
 
   const request = buildDiscordWebhookRequest(options.webhookUrl, payload);
   await sendDiscordWebhook(request, { timeoutMs: options.timeoutMs });
+  const logEntry = buildDeliveryLogEntry(report, summaryOptions);
+  await appendDeliveryLogIfRequested(logEntry, summaryOptions.deliveryLogFile);
   console.log(formatDiscordDeliverySummary(report, summaryOptions));
 }
 
@@ -253,8 +294,10 @@ module.exports = {
   parseSendArgs,
   resolveSendOptions,
   resolvePayloadOutputFile,
+  buildDeliveryLogEntry,
   formatDiscordDeliverySummary,
   buildDiscordWebhookRequest,
   sendDiscordWebhook,
-  persistPayloadIfRequested
+  persistPayloadIfRequested,
+  appendDeliveryLogIfRequested
 };

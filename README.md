@@ -78,6 +78,8 @@ If you want to wire the reporting output into a live operational channel, the re
 
 If `DISCORD_PAYLOAD_OUTPUT_FILE` is set, the sender will also save the final webhook payload JSON to disk and print a short delivery summary after dry-run or successful delivery. If `DISCORD_PAYLOAD_TIMESTAMPED=true` is set too, the saved file name gets a UTC timestamp suffix so repeated runs do not overwrite the previous payload.
 
+If `DISCORD_DELIVERY_LOG_FILE` is set, the sender also appends a local JSONL delivery index entry per dry-run or successful send, so reporting activity can be inspected later without parsing console history.
+
 ## Architecture at a glance
 
 ```mermaid

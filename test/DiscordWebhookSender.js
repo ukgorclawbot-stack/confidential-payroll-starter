@@ -4,10 +4,12 @@ const {
   parseSendArgs,
   resolveSendOptions,
   resolvePayloadOutputFile,
+  buildDeliveryLogEntry,
   buildDiscordWebhookRequest,
   sendDiscordWebhook,
   formatDiscordDeliverySummary,
-  persistPayloadIfRequested
+  persistPayloadIfRequested,
+  appendDeliveryLogIfRequested
 } = require("../scripts/send-discord-webhook.cjs");
 
 describe("send-discord-webhook script helpers", function () {
@@ -37,7 +39,8 @@ describe("send-discord-webhook script helpers", function () {
       DISCORD_WEBHOOK_TIMEOUT_MS: "15000",
       DISCORD_WEBHOOK_DRY_RUN: "true",
       DISCORD_PAYLOAD_OUTPUT_FILE: "./reports/payload.json",
-      DISCORD_PAYLOAD_TIMESTAMPED: "true"
+      DISCORD_PAYLOAD_TIMESTAMPED: "true",
+      DISCORD_DELIVERY_LOG_FILE: "./reports/discord-delivery.jsonl"
     });
 
     assert.equal(fromFlag.demo, "partial");
@@ -52,6 +55,7 @@ describe("send-discord-webhook script helpers", function () {
     assert.equal(fromEnv.dryRun, true);
     assert.equal(fromEnv.payloadFile, "./reports/payload.json");
     assert.equal(fromEnv.timestampedPayloadFile, true);
+    assert.equal(fromEnv.deliveryLogFile, "./reports/discord-delivery.jsonl");
   });
 
   it("builds a timestamped payload file path when timestamp mode is enabled", function () {
@@ -82,6 +86,28 @@ describe("send-discord-webhook script helpers", function () {
     assert.match(summary, /discordWebhookDelivery: sent/);
     assert.match(summary, /batchId=11/);
     assert.match(summary, /payloadFile=\/tmp\/payload\.json/);
+  });
+
+  it("builds a delivery log entry with workflow status and file references", function () {
+    const entry = buildDeliveryLogEntry({
+      batchId: "12",
+      isFunded: true,
+      isCountSettled: false,
+      isValueSettled: false
+    }, {
+      dryRun: true,
+      payloadFile: "/tmp/payload.json"
+    }, {
+      now: new Date("2026-03-29T12:34:56Z")
+    });
+
+    assert.equal(entry.timestamp, "2026-03-29T12:34:56.000Z");
+    assert.equal(entry.batchId, "12");
+    assert.equal(entry.deliveryStatus, "dry-run");
+    assert.equal(entry.payloadFile, "/tmp/payload.json");
+    assert.equal(entry.isFunded, true);
+    assert.equal(entry.isCountSettled, false);
+    assert.equal(entry.isValueSettled, false);
   });
 
   it("builds a post request for the discord webhook", function () {
@@ -146,5 +172,35 @@ describe("send-discord-webhook script helpers", function () {
     assert.equal(calls[1][0], "writeFile");
     assert.equal(calls[1][1], "/tmp/reports/payload.json");
     assert.deepEqual(JSON.parse(calls[1][2]), payload);
+  });
+
+  it("appends a jsonl delivery log entry only when a log path is provided", async function () {
+    const calls = [];
+    const fsImpl = {
+      mkdir: async (directory, options) => {
+        calls.push(["mkdir", directory, options]);
+      },
+      appendFile: async (filePath, content) => {
+        calls.push(["appendFile", filePath, content]);
+      }
+    };
+
+    const skipped = await appendDeliveryLogIfRequested(
+      { batchId: "1", deliveryStatus: "sent" },
+      null,
+      fsImpl
+    );
+    const written = await appendDeliveryLogIfRequested(
+      { batchId: "2", deliveryStatus: "dry-run" },
+      "/tmp/reports/discord-delivery.jsonl",
+      fsImpl
+    );
+
+    assert.equal(skipped, false);
+    assert.equal(written, true);
+    assert.deepEqual(calls[0], ["mkdir", "/tmp/reports", { recursive: true }]);
+    assert.equal(calls[1][0], "appendFile");
+    assert.equal(calls[1][1], "/tmp/reports/discord-delivery.jsonl");
+    assert.deepEqual(JSON.parse(calls[1][2]), { batchId: "2", deliveryStatus: "dry-run" });
   });
 });
