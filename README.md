@@ -163,6 +163,11 @@ This repository tries to make that evaluation practical by combining:
 - a richer local vault stub for settlement and reconciliation semantics
 - reporting outputs that can later feed dashboards, bots, or operational tooling
 
+## Related ecosystem
+
+If you want to extend a workflow like this toward agent-operated coordination around approvals, reconciliation, or operational handoffs, [Beacon Atlas](https://rustchain.org/beacon/) is a relevant adjacent project to study.
+It focuses on agent discovery, task coordination, and execution-network patterns, which maps well to the bot and operational-tooling layer this starter already hints at.
+
 ## Next steps
 
 The most natural next extensions from this starter are:
